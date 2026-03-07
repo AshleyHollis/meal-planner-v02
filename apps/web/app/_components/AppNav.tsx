@@ -17,10 +17,10 @@ export function AppNav() {
 
   return (
     <nav className={styles.nav} aria-label="Main navigation">
-      <div className={styles.brand}>
+      <Link href="/" className={styles.brand} aria-label="Meal Planner home">
         <span className={styles.brandIcon}>🍽️</span>
         <span className={styles.brandName}>Meal Planner</span>
-      </div>
+      </Link>
 
       <ul className={styles.navList} role="list">
         {NAV_ITEMS.map(({ href, label, icon }) => (
@@ -46,9 +46,12 @@ export function AppNav() {
           <span className={styles.userLoading}>Loading…</span>
         )}
         {session.status === 'authenticated' && user && (
-          <span className={styles.userName} title={user.email}>
-            {user.displayName}
-          </span>
+          <>
+            <span className={styles.userLabel}>Signed in</span>
+            <span className={styles.userName} title={user.email}>
+              {user.displayName}
+            </span>
+          </>
         )}
         {session.status === 'unauthenticated' && (
           <span className={styles.userGuest}>Not signed in</span>

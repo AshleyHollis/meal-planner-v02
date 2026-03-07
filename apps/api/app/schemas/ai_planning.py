@@ -68,7 +68,7 @@ class AISuggestionResultRead(BaseModel):
     id: str
     request_id: str
     meal_plan_id: Optional[str]
-    fallback_mode: bool
+    fallback_mode: str
     stale_flag: bool
     result_contract_version: Optional[str]
     created_at: datetime

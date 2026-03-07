@@ -101,7 +101,7 @@ def test_ai_suggestion_result_with_slots(db_session):
 
     result = AISuggestionResult(
         request_id=req.id,
-        fallback_mode=False,
+        fallback_mode="none",
         stale_flag=False,
         result_contract_version="v1.0",
         created_at=datetime.utcnow(),
@@ -138,7 +138,7 @@ def test_ai_suggestion_slot_key_is_unique_per_result(db_session):
 
     result = AISuggestionResult(
         request_id=req.id,
-        fallback_mode=False,
+        fallback_mode="none",
         stale_flag=False,
         created_at=datetime.utcnow(),
     )

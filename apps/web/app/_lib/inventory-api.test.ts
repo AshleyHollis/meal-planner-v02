@@ -65,7 +65,7 @@ test('getInventory loads active items for the requested location', async () => {
   const items = await getInventory('fridge');
 
   assert.equal(calls.length, 1);
-  assert.equal(String(calls[0].input), 'http://localhost:8000/api/v1/inventory');
+  assert.equal(String(calls[0].input), '/api/v1/inventory');
   assert.equal(items.length, 1);
   assert.equal(items[0]?.inventoryItemId, 'item-1');
   assert.equal(items[0]?.serverVersion, 4);
@@ -101,7 +101,7 @@ test('mutateInventory creates items in the authenticated household context', asy
 
   const receipt = await mutateInventory('household-abc', mutation);
 
-  assert.equal(String(calls[0]?.input), 'http://localhost:8000/api/v1/inventory');
+  assert.equal(String(calls[0]?.input), '/api/v1/inventory');
   assert.equal(calls[0]?.init?.method, 'POST');
   const body = JSON.parse(String(calls[0]?.init?.body));
   assert.equal(body.household_id, 'household-abc');
@@ -142,7 +142,7 @@ test('mutateInventory archives items with the last known version', async () => {
     payload: {},
   });
 
-  assert.equal(String(calls[0]?.input), 'http://localhost:8000/api/v1/inventory/item-9/archive');
+  assert.equal(String(calls[0]?.input), '/api/v1/inventory/item-9/archive');
   const body = JSON.parse(String(calls[0]?.init?.body));
   assert.equal(body.client_mutation_id, 'mutation-archive');
   assert.equal(body.version, 7);
@@ -178,7 +178,7 @@ test('mutateInventory uses PATCH for metadata updates', async () => {
     },
   });
 
-  assert.equal(String(calls[0]?.input), 'http://localhost:8000/api/v1/inventory/item-3/metadata');
+  assert.equal(String(calls[0]?.input), '/api/v1/inventory/item-3/metadata');
   assert.equal(calls[0]?.init?.method, 'PATCH');
   const body = JSON.parse(String(calls[0]?.init?.body));
   assert.equal(body.name, 'Greek Yogurt');
@@ -216,7 +216,7 @@ test('mutateInventory sends quantity adjustments to the adjustment endpoint', as
 
   assert.equal(
     String(calls[0]?.input),
-    'http://localhost:8000/api/v1/inventory/item-4/adjustments'
+    '/api/v1/inventory/item-4/adjustments'
   );
   assert.equal(calls[0]?.init?.method, 'POST');
   const body = JSON.parse(String(calls[0]?.init?.body));
@@ -253,7 +253,7 @@ test('mutateInventory sends move requests to the move endpoint', async () => {
     },
   });
 
-  assert.equal(String(calls[0]?.input), 'http://localhost:8000/api/v1/inventory/item-5/move');
+  assert.equal(String(calls[0]?.input), '/api/v1/inventory/item-5/move');
   const body = JSON.parse(String(calls[0]?.init?.body));
   assert.equal(body.storage_location, 'freezer');
   assert.equal(body.version, 3);
@@ -290,7 +290,7 @@ test('mutateInventory sends compensating corrections with the linked adjustment 
 
   assert.equal(
     String(calls[0]?.input),
-    'http://localhost:8000/api/v1/inventory/item-6/corrections'
+    '/api/v1/inventory/item-6/corrections'
   );
   const body = JSON.parse(String(calls[0]?.init?.body));
   assert.equal(body.delta_quantity, -1);
@@ -420,7 +420,7 @@ test('getInventoryHistory maps paginated correction chains directly from the API
 
   assert.equal(
     String(calls[0]?.input),
-    'http://localhost:8000/api/v1/inventory/item-7/history?limit=1&offset=2'
+    '/api/v1/inventory/item-7/history?limit=1&offset=2'
   );
   assert.equal(history.total, 7);
   assert.equal(history.hasMore, true);
@@ -428,3 +428,4 @@ test('getInventoryHistory maps paginated correction chains directly from the API
   assert.equal(history.entries[0]?.workflowReference?.causalWorkflowType, 'shopping_reconciliation');
   assert.equal(history.summary.correctionCount, 1);
 });
+

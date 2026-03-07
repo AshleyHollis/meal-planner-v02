@@ -210,11 +210,15 @@ export type PlanSlotState =
   | 'regenerating'
   | 'regen_failed';
 
+export type FallbackMode = 'none' | 'curated_fallback' | 'manual_guidance';
+
 export type PlanSlotSuggestionSnapshot = {
   mealTitle: string | null;
   mealSummary: string | null;
   reasonCodes: string[];
   explanation: string | null;
+  usesOnHand: string[];
+  missingHints: string[];
 };
 
 export type PlanSlot = {
@@ -229,6 +233,9 @@ export type PlanSlot = {
   slotState: PlanSlotState;
   originalSuggestion: PlanSlotSuggestionSnapshot | null;
   slotMessage: string | null;
+  fallbackMode: FallbackMode | null;
+  usesOnHand: string[];
+  missingHints: string[];
 };
 
 export type DraftPlan = {
@@ -250,8 +257,6 @@ export type AISuggestionStatus =
   | 'fallback_used'
   | 'insufficient_context'
   | 'failed';
-
-export type FallbackMode = 'none' | 'curated_fallback' | 'manual_guidance';
 
 export type AISuggestionResult = {
   suggestionId: string;
@@ -277,47 +282,261 @@ export type ConfirmedPlan = {
 
 // ─── Grocery ─────────────────────────────────────────────────────────────────
 
-export type GroceryLineOrigin = 'meal_derived' | 'ad_hoc';
+export type GroceryLineOrigin = 'derived' | 'ad_hoc';
 
-export type GroceryListStatus = 'deriving' | 'current' | 'shopping' | 'completed';
+export type GroceryListStatus =
+  | 'no_plan_confirmed'
+  | 'deriving'
+  | 'draft'
+  | 'stale_draft'
+  | 'confirming'
+  | 'confirmed'
+  | 'trip_in_progress'
+  | 'trip_complete_pending_reconciliation';
 
-export type GroceryReviewState = 'draft' | 'confirmed';
+export type GroceryTripState =
+  | 'confirmed_list_ready'
+  | 'trip_in_progress'
+  | 'trip_complete_pending_reconciliation';
+
+export type GroceryMealSource = {
+  mealSlotId: string;
+  mealName: string | null;
+  contributedQuantity: number;
+};
+
+export type GroceryIncompleteSlotWarning = {
+  mealSlotId: string;
+  mealName: string | null;
+  reason: string;
+  message: string | null;
+};
 
 export type GroceryLine = {
   groceryLineId: string;
   groceryListId: string;
+  groceryListVersionId: string;
   name: string;
+  ingredientRefId: string | null;
   quantityNeeded: number;
   unit: string;
   quantityCoveredByInventory: number;
   quantityToBuy: number;
   origin: GroceryLineOrigin;
-  sourceMealIds: string[];
-  sourceMeals: string[];
-  checked: boolean;
+  mealSources: GroceryMealSource[];
   offsetInventoryItemId: string | null;
+  offsetInventoryItemVersion: number | null;
   userAdjustedQuantity: number | null;
+  userAdjustmentNote: string | null;
   userAdjustmentFlagged: boolean;
+  adHocNote: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type GroceryList = {
   groceryListId: string;
   householdId: string;
   planPeriodStart: string;
+  planPeriodEnd: string | null;
   lines: GroceryLine[];
   derivedFromPlanId: string | null;
   lastDerivedAt: string | null;
+  confirmedAt: string | null;
+  tripState: GroceryTripState;
   isStale: boolean;
   status: GroceryListStatus;
-  reviewState: GroceryReviewState;
   currentVersionNumber: number;
+  currentVersionId: string | null;
+  confirmedPlanVersion: number | null;
+  inventorySnapshotReference: string | null;
+  incompleteSlotWarnings: GroceryIncompleteSlotWarning[];
 };
 
 // ─── Sync queue ──────────────────────────────────────────────────────────────
 
+export type SyncAggregateType = 'grocery_list' | 'grocery_line' | 'inventory_item';
+
+export type SyncAggregateRef = {
+  aggregateType: SyncAggregateType;
+  aggregateId: string;
+  aggregateVersion: number | null;
+  provisionalAggregateId: string | null;
+};
+
+export type QueueableSyncMutation = {
+  clientMutationId: string;
+  householdId: string;
+  actorId: string;
+  aggregateType: SyncAggregateType;
+  aggregateId: string | null;
+  provisionalAggregateId: string | null;
+  mutationType: string;
+  payload: Record<string, unknown>;
+  baseServerVersion: number | null;
+  deviceTimestamp: string;
+  localQueueStatus: SyncStatus;
+};
+
+export type SyncOutcome =
+  | 'applied'
+  | 'duplicate_retry'
+  | 'auto_merged_non_overlapping'
+  | 'failed_retryable'
+  | 'review_required_quantity'
+  | 'review_required_deleted_or_archived'
+  | 'review_required_freshness_or_location'
+  | 'review_required_other_unsafe';
+
+export type SyncResolutionAction = 'keep_mine' | 'use_server';
+
+export type SyncResolutionStatus = 'pending' | 'resolved_keep_mine' | 'resolved_use_server';
+
+export type SyncMutationOutcome = {
+  clientMutationId: string;
+  mutationType: string;
+  aggregate: SyncAggregateRef;
+  outcome: SyncOutcome;
+  authoritativeServerVersion: number | null;
+  conflictId: string | null;
+  retryable: boolean;
+  duplicateOfClientMutationId: string | null;
+  autoMergeReason: string | null;
+};
+
+export type SyncConflictSummary = {
+  conflictId: string;
+  householdId: string;
+  aggregate: SyncAggregateRef;
+  localMutationId: string;
+  mutationType: string;
+  outcome: SyncOutcome;
+  baseServerVersion: number | null;
+  currentServerVersion: number;
+  requiresReview: boolean;
+  summary: string;
+  localQueueStatus: SyncStatus;
+  allowedResolutionActions: SyncResolutionAction[];
+  resolutionStatus: SyncResolutionStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedByActorId: string | null;
+};
+
+export type SyncConflictDetail = SyncConflictSummary & {
+  localIntentSummary: Record<string, unknown>;
+  baseStateSummary: Record<string, unknown>;
+  serverStateSummary: Record<string, unknown>;
+};
+
+export type GroceryConfirmedListBootstrap = {
+  householdId: string;
+  groceryListId: string;
+  groceryListVersionId: string;
+  groceryListStatus: GroceryListStatus;
+  tripState: GroceryTripState;
+  aggregate: SyncAggregateRef;
+  confirmedAt: string;
+  confirmedPlanVersion: number | null;
+  inventorySnapshotReference: string | null;
+  incompleteSlotWarnings: GroceryIncompleteSlotWarning[];
+  lines: GroceryLine[];
+};
+
+export type SyncConflictKeepMineCommand = {
+  conflictId: string;
+  householdId: string;
+  clientMutationId: string;
+  baseServerVersion: number | null;
+};
+
+export type SyncConflictUseServerCommand = {
+  conflictId: string;
+  householdId: string;
+  clientMutationId: string;
+};
+
 export type SyncStatus =
   | 'idle'
+  | 'queued_offline'
   | 'syncing'
+  | 'synced'
+  | 'retrying'
+  | 'failed_retryable'
   | 'conflict'
+  | 'review_required'
+  | 'resolving'
+  | 'resolved_keep_mine'
+  | 'resolved_use_server'
   | 'error'
   | 'offline';
+
+export type OfflineSyncScope = {
+  householdId: string;
+  groceryListId: string;
+  groceryListVersionId: string;
+  planPeriodStart: string;
+  tripState: GroceryTripState;
+  aggregate: SyncAggregateRef;
+};
+
+export type OfflineMealPlanContext = {
+  snapshotKey: string;
+  householdId: string;
+  groceryListId: string;
+  groceryListVersionId: string;
+  planPeriodStart: string;
+  planPeriodEnd: string | null;
+  derivedFromPlanId: string | null;
+  confirmedPlanVersion: number | null;
+  savedAt: string;
+};
+
+export type OfflineInventorySnapshot = {
+  snapshotKey: string;
+  householdId: string;
+  groceryListId: string;
+  groceryListVersionId: string;
+  inventorySnapshotReference: string | null;
+  savedAt: string;
+};
+
+export type OfflineConfirmedListSnapshot = {
+  snapshotKey: string;
+  scope: OfflineSyncScope;
+  savedAt: string;
+  bootstrap: GroceryConfirmedListBootstrap;
+  groceryList: GroceryList;
+  mealPlanContext: OfflineMealPlanContext;
+  inventorySnapshot: OfflineInventorySnapshot;
+};
+
+export type OfflineSyncMutationRecord = QueueableSyncMutation & {
+  scope: OfflineSyncScope;
+  snapshotKey: string;
+  retryCount: number;
+  lastAttemptAt: string | null;
+  nextRetryAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OfflineConflictRecord = {
+  conflict: SyncConflictDetail;
+  scope: OfflineSyncScope;
+  snapshotKey: string;
+  localMutation: OfflineSyncMutationRecord | null;
+  storedAt: string;
+  updatedAt: string;
+};
+
+export type OfflineQueueState = {
+  queuedCount: number;
+  retryingCount: number;
+  failedRetryableCount: number;
+  reviewRequiredCount: number;
+  conflictCount: number;
+  latestSnapshotSavedAt: string | null;
+};

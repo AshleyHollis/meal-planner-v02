@@ -15,6 +15,7 @@ type Props = {
   slot: PlanSlot;
   editable?: boolean;
   showOriginBadge?: boolean;
+  showSuggestionMeta?: boolean;
   onEdit?: (slotId: string) => void;
   onRegenerate?: (slotId: string) => void;
 };
@@ -23,11 +24,22 @@ export function PlanSlotCard({
   slot,
   editable = false,
   showOriginBadge = true,
+  showSuggestionMeta = true,
   onEdit,
   onRegenerate,
 }: Props) {
   const isRegenerating =
     slot.slotState === 'regenerating' || slot.slotState === 'pending_regen';
+  const slotStateLabel =
+    slot.slotState === 'pending_regen'
+      ? 'Requesting a refreshed suggestion…'
+      : slot.slotState === 'regenerating'
+        ? 'Refreshing this suggestion…'
+        : null;
+  const showFallbackNote = showSuggestionMeta && slot.fallbackMode && slot.fallbackMode !== 'none';
+  const showReasonCodes = showSuggestionMeta && slot.reasonCodes.length > 0;
+  const showUsesOnHand = showSuggestionMeta && slot.usesOnHand.length > 0;
+  const showMissingHints = showSuggestionMeta && slot.missingHints.length > 0;
 
   return (
     <div
@@ -43,13 +55,42 @@ export function PlanSlotCard({
         )}
       </div>
 
-      {isRegenerating ? (
-        <p className={styles.regenLabel}>Refreshing suggestion…</p>
+      {slotStateLabel ? (
+        <p className={styles.regenLabel}>{slotStateLabel}</p>
       ) : slot.mealTitle ? (
         <>
           <p className={styles.mealTitle}>{slot.mealTitle}</p>
           {slot.mealSummary && <p className={styles.mealSummary}>{slot.mealSummary}</p>}
-          {slot.explanation && (
+          {showFallbackNote && (
+            <p className={styles.fallbackNote}>
+              {slot.fallbackMode === 'curated_fallback'
+                ? 'Uses the planner’s curated backup guidance.'
+                : 'AI could not replace this slot with a better match from the current household context.'}
+            </p>
+          )}
+          {showReasonCodes && (
+            <ul className={styles.reasonCodes} aria-label="Planner reasons">
+              {slot.reasonCodes.map((reasonCode) => (
+                <li key={reasonCode}>
+                  {reasonCode
+                    .split('_')
+                    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                    .join(' ')}
+                </li>
+              ))}
+            </ul>
+          )}
+          {showUsesOnHand && (
+            <p className={styles.supportingText}>
+              Uses on hand: <strong>{slot.usesOnHand.join(', ')}</strong>
+            </p>
+          )}
+          {showMissingHints && (
+            <p className={styles.supportingText}>
+              Missing hints: <strong>{slot.missingHints.join(', ')}</strong>
+            </p>
+          )}
+          {showSuggestionMeta && slot.explanation && (
             <details className={styles.explanation}>
               <summary>Why this meal?</summary>
               <p>{slot.explanation}</p>

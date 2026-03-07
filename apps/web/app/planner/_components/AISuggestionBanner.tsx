@@ -1,6 +1,7 @@
 'use client';
 
-import type { AISuggestionStatus } from '../../_lib/types';
+import { getSuggestionBannerDetail } from '../../_lib/planner-ui';
+import type { AISuggestionStatus, FallbackMode } from '../../_lib/types';
 import styles from './AISuggestionBanner.module.css';
 
 const STATUS_CONFIG: Record<
@@ -25,6 +26,8 @@ const STATUS_CONFIG: Record<
 
 type Props = {
   status: AISuggestionStatus;
+  fallbackMode?: FallbackMode;
+  hasConfirmedPlan?: boolean;
   isStale?: boolean;
   onOpenDraft?: () => void;
   onRequestNew?: () => void;
@@ -32,11 +35,14 @@ type Props = {
 
 export function AISuggestionBanner({
   status,
+  fallbackMode = 'none',
+  hasConfirmedPlan = false,
   isStale,
   onOpenDraft,
   onRequestNew,
 }: Props) {
   const config = STATUS_CONFIG[status];
+  const detail = getSuggestionBannerDetail(status, fallbackMode, { hasConfirmedPlan });
   const canReview = (status === 'ready' || status === 'fallback_used') && onOpenDraft;
   const canRequest =
     (status === 'idle' || status === 'failed' || status === 'insufficient_context') &&
@@ -47,12 +53,13 @@ export function AISuggestionBanner({
       <span className={styles.icon} aria-hidden="true">
         {config.icon}
       </span>
-      <span className={styles.label}>
-        {config.label}
-        {isStale && status !== 'generating' && (
-          <span className={styles.stale}> · Stale</span>
-        )}
-      </span>
+      <div className={styles.copy}>
+        <span className={styles.label}>
+          {config.label}
+          {isStale && status !== 'generating' && <span className={styles.stale}> · Stale</span>}
+        </span>
+        {detail && <p className={styles.detail}>{detail}</p>}
+      </div>
       <div className={styles.actions}>
         {canReview && (
           <button className={styles.primaryAction} onClick={onOpenDraft} type="button">

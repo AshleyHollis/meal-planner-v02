@@ -49,6 +49,7 @@ from app.schemas.inventory import (
     MoveLocationCommand,
     SetMetadataCommand,
 )
+from app.services.local_db_compat import resolve_local_db_path
 
 _QUANTITY_SCALE = Decimal("0.0001")
 logger = logging.getLogger(__name__)
@@ -110,9 +111,10 @@ class InventoryStore:
     def for_default_app(cls) -> InventoryStore:
         build_dir = Path(__file__).resolve().parents[2] / "build"
         build_dir.mkdir(parents=True, exist_ok=True)
+        db_path = resolve_local_db_path((build_dir / "inventory.sqlite").resolve())
         db_url = URL.create(
             "sqlite+pysqlite",
-            database=str((build_dir / "inventory.sqlite").resolve()),
+            database=str(db_path),
         )
         return cls(database_url=db_url)
 

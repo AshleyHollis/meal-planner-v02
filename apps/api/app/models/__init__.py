@@ -2,7 +2,14 @@ from app.models.base import Base
 from app.models.household import Household, HouseholdMembership
 from app.models.inventory import InventoryItem, InventoryAdjustment, MutationReceipt
 from app.models.meal_plan import MealPlan, MealPlanSlot, MealPlanSlotHistory
-from app.models.grocery import GroceryList, GroceryListVersion, GroceryListItem
+from app.models.grocery import (
+    GroceryList,
+    GroceryListVersion,
+    GroceryListItem,
+    GroceryMutationReceipt,
+    GrocerySyncConflict,
+)
+from app.models.planner_event import PlannerEvent
 from app.models.reconciliation import (
     ShoppingReconciliation,
     ShoppingReconciliationRow,
@@ -17,7 +24,8 @@ __all__ = [
     "Household", "HouseholdMembership",
     "InventoryItem", "InventoryAdjustment", "MutationReceipt",
     "MealPlan", "MealPlanSlot", "MealPlanSlotHistory",
-    "GroceryList", "GroceryListVersion", "GroceryListItem",
+    "PlannerEvent",
+    "GroceryList", "GroceryListVersion", "GroceryListItem", "GroceryMutationReceipt", "GrocerySyncConflict",
     "ShoppingReconciliation", "ShoppingReconciliationRow",
     "CookingEvent", "CookingIngredientRow", "LeftoverRow",
     "AISuggestionRequest", "AISuggestionResult", "AISuggestionSlot",

@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/run-next.cjs dev .next-dev",
+    "build": "node scripts/run-next.cjs build",
+    "start": "node scripts/run-next.cjs start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test app\\_lib\\session.test.ts app\\_lib\\inventory-api.test.ts app\\_lib\\inventory-trust.test.ts",
+    "test": "tsx --test app\\_lib\\session.test.ts app\\_lib\\inventory-api.test.ts app\\_lib\\inventory-trust.test.ts app\\_lib\\planner-api.test.ts app\\_lib\\planner-ui.test.ts app\\_lib\\grocery-api.test.ts app\\_lib\\grocery-ui.test.ts app\\_lib\\offline-sync.test.ts app\\_lib\\trip-mode.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed"
   },

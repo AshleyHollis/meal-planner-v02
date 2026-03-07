@@ -12,7 +12,7 @@
     "typecheck:web": "npm --prefix apps/web run typecheck",
     "dev:api": "python -m uvicorn app.main:app --app-dir apps/api --host 127.0.0.1 --port 8000",
     "dev:worker": "python apps/worker/app/main.py",
-    "test:api": "python -m pytest apps/api/tests",
-    "test:worker": "python -m pytest apps/worker/tests"
+    "test:api": "cmd /c \"cd apps\\\\api && python -m pytest tests\"",
+    "test:worker": "cmd /c \"cd apps\\\\worker && python -m pytest tests\""
   }
 }

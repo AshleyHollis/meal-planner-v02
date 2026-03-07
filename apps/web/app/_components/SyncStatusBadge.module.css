@@ -12,7 +12,28 @@
   color: #3b82f6;
 }
 
+.queued_offline,
+.retrying,
+.offline {
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.synced,
+.resolved_keep_mine,
+.resolved_use_server {
+  background: #ecfdf5;
+  color: #059669;
+}
+
 .conflict {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.failed_retryable,
+.review_required,
+.resolving {
   background: #fff7ed;
   color: #f97316;
 }
@@ -20,9 +41,4 @@
 .error {
   background: #fef2f2;
   color: #ef4444;
-}
-
-.offline {
-  background: #f9fafb;
-  color: #6b7280;
 }

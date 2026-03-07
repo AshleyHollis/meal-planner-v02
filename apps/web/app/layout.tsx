@@ -1,6 +1,7 @@
 import './globals.css';
 import type { ReactNode } from 'react';
 import { SessionProvider } from './_providers/SessionContext';
+import { OfflineSyncProvider } from './_providers/OfflineSyncContext';
 import { AppNav } from './_components/AppNav';
 
 export const metadata = {
@@ -17,8 +18,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body>
         <SessionProvider>
-          <AppNav />
-          <main>{children}</main>
+          <OfflineSyncProvider>
+            <AppNav />
+            <main>{children}</main>
+          </OfflineSyncProvider>
         </SessionProvider>
       </body>
     </html>

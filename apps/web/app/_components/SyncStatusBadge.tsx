@@ -5,8 +5,16 @@ import styles from './SyncStatusBadge.module.css';
 
 const LABELS: Record<SyncStatus, string> = {
   idle: 'Saved',
+  queued_offline: 'Queued offline',
   syncing: 'Syncing…',
+  synced: 'Synced',
+  retrying: 'Retrying…',
+  failed_retryable: 'Retry failed',
   conflict: 'Conflict',
+  review_required: 'Review required',
+  resolving: 'Resolving…',
+  resolved_keep_mine: 'Kept mine',
+  resolved_use_server: 'Used server',
   error: 'Sync error',
   offline: 'Offline',
 };

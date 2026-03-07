@@ -1,6 +1,18 @@
 :root {
   color-scheme: light;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  --page-max-width: 1120px;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-subtle: #eef2ff;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-soft: #475569;
+  --text-muted: #64748b;
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --shadow-soft: 0 24px 48px rgba(15, 23, 42, 0.08);
 }
 
 *,
@@ -11,10 +23,34 @@
 
 body {
   margin: 0;
-  background: #f7f7fb;
-  color: #171717;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top, #eef2ff 0%, #f8fafc 26%, #f8fafc 100%);
+  color: var(--text);
+  line-height: 1.5;
 }
 
 main {
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 64px);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.35);
+  outline-offset: 2px;
 }

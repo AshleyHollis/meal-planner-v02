@@ -60,7 +60,7 @@ class AISuggestionResult(Base):
     meal_plan_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("meal_plans.id"), nullable=True
     )
-    fallback_mode: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    fallback_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="none")
     stale_flag: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     result_contract_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)

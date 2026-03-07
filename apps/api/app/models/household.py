@@ -23,6 +23,10 @@ class Household(Base):
     inventory_items: Mapped[list["InventoryItem"]] = relationship(back_populates="household")
     inventory_adjustments: Mapped[list["InventoryAdjustment"]] = relationship(back_populates="household")
     mutation_receipts: Mapped[list["MutationReceipt"]] = relationship(back_populates="household")
+    grocery_lists: Mapped[list["GroceryList"]] = relationship(back_populates="household")
+    grocery_mutation_receipts: Mapped[list["GroceryMutationReceipt"]] = relationship(
+        back_populates="household"
+    )
 
 
 class HouseholdMembership(Base):
@@ -44,4 +48,3 @@ class HouseholdMembership(Base):
     )
 
     household: Mapped["Household"] = relationship(back_populates="memberships")
-

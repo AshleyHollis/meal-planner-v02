@@ -25,6 +25,8 @@ request household rather than trusted as authoritative input.
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies.session import (
@@ -47,10 +49,12 @@ from app.schemas.inventory import (
     MoveLocationCommand,
     SetMetadataCommand,
 )
+from app.services.grocery_service import GroceryService, get_grocery_service
 from app.services.inventory_store import InventoryStore, get_inventory_store
 from app.services.inventory_store import InventoryConflictError, InventoryDomainError
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
+logger = logging.getLogger(__name__)
 
 def _inventory_conflict_detail(error: InventoryConflictError) -> dict[str, object]:
     return {
@@ -66,6 +70,28 @@ def _inventory_domain_detail(error: InventoryDomainError) -> dict[str, str]:
         "code": error.code,
         "message": error.message,
     }
+
+
+def _refresh_grocery_stale_drafts(
+    grocery: GroceryService,
+    *,
+    household_id: str,
+    actor_id: str,
+    correlation_id: str | None,
+) -> None:
+    try:
+        grocery.refresh_stale_drafts(household_id, actor_id=actor_id, correlation_id=correlation_id)
+    except Exception:  # pragma: no cover - best-effort orchestration safety
+        logger.exception(
+            "grocery stale refresh failed",
+            extra={
+                "grocery_action": "stale_refresh",
+                "grocery_outcome": "failed",
+                "grocery_household_id": household_id,
+                "grocery_actor_id": actor_id,
+                "grocery_correlation_id": correlation_id,
+            },
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -156,10 +182,18 @@ def create_inventory_item(
     command: CreateItemCommand,
     session: RequestSession = Depends(get_request_session),
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     household_id = assert_household_access(session, command.household_id)
     authorized_command = command.model_copy(update={"household_id": household_id})
-    return store.create_item(authorized_command, actor_user_id=session.user.user_id)
+    receipt = store.create_item(authorized_command, actor_user_id=session.user.user_id)
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=authorized_command.client_mutation_id,
+    )
+    return receipt
 
 
 @router.patch(
@@ -173,6 +207,7 @@ def update_item_metadata(
     session: RequestSession = Depends(get_request_session),
     command: SetMetadataCommand = ...,
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     try:
         receipt = store.set_metadata(
@@ -187,6 +222,12 @@ def update_item_metadata(
         raise HTTPException(status_code=422, detail=_inventory_domain_detail(error)) from error
     if receipt is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=command.client_mutation_id,
+    )
     return receipt
 
 
@@ -202,6 +243,7 @@ def adjust_item_quantity(
     session: RequestSession = Depends(get_request_session),
     command: AdjustQuantityCommand = ...,
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     allowed = {
         MutationType.increase_quantity,
@@ -226,6 +268,12 @@ def adjust_item_quantity(
         raise HTTPException(status_code=422, detail=_inventory_domain_detail(error)) from error
     if receipt is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=command.client_mutation_id,
+    )
     return receipt
 
 
@@ -241,6 +289,7 @@ def move_item_location(
     session: RequestSession = Depends(get_request_session),
     command: MoveLocationCommand = ...,
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     try:
         receipt = store.move_location(
@@ -255,6 +304,12 @@ def move_item_location(
         raise HTTPException(status_code=422, detail=_inventory_domain_detail(error)) from error
     if receipt is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=command.client_mutation_id,
+    )
     return receipt
 
 
@@ -270,6 +325,7 @@ def archive_item(
     session: RequestSession = Depends(get_request_session),
     command: ArchiveItemCommand = ...,
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     try:
         receipt = store.archive_item(
@@ -284,6 +340,12 @@ def archive_item(
         raise HTTPException(status_code=422, detail=_inventory_domain_detail(error)) from error
     if receipt is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=command.client_mutation_id,
+    )
     return receipt
 
 
@@ -299,6 +361,7 @@ def apply_correction(
     session: RequestSession = Depends(get_request_session),
     command: CorrectionCommand = ...,
     store: InventoryStore = Depends(get_inventory_store),
+    grocery: GroceryService = Depends(get_grocery_service),
 ) -> AdjustmentReceiptResponse:
     try:
         receipt = store.apply_correction(
@@ -313,4 +376,10 @@ def apply_correction(
         raise HTTPException(status_code=422, detail=_inventory_domain_detail(error)) from error
     if receipt is None:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    _refresh_grocery_stale_drafts(
+        grocery,
+        household_id=household_id,
+        actor_id=session.user.user_id,
+        correlation_id=command.client_mutation_id,
+    )
     return receipt

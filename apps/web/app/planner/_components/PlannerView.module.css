@@ -65,11 +65,16 @@
 
 .confirmRow {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 1rem;
   margin-top: 1.5rem;
   flex-wrap: wrap;
+}
+
+.confirmCopy {
+  flex: 1 1 22rem;
+  min-width: min(22rem, 100%);
 }
 
 .confirmError {

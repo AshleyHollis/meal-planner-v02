@@ -40,7 +40,7 @@ test('fetchSession returns authenticated household context from bootstrap respon
   const session = await fetchSession();
 
   assert.equal(calls.length, 1);
-  assert.equal(String(calls[0].input), 'http://localhost:8000/api/v1/me');
+  assert.equal(String(calls[0].input), '/api/v1/me');
   assert.equal(calls[0].init?.credentials, 'include');
   assert.equal(session.status, 'authenticated');
   if (session.status !== 'authenticated') {
@@ -83,3 +83,4 @@ test('fetchSession maps 403 bootstrap failures to unauthorized state', async () 
     message: "The active household selected for this request is not one of the caller's memberships.",
   });
 });
+

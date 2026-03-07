@@ -88,7 +88,7 @@ def test_ai_suggestion_slot_and_result_reads_capture_slot_key_and_summary():
         id="result-001",
         request_id="req-001",
         meal_plan_id="plan-001",
-        fallback_mode=False,
+        fallback_mode="none",
         stale_flag=False,
         result_contract_version="result-v1",
         created_at="2025-01-01T12:00:00Z",

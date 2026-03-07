@@ -73,6 +73,52 @@ class GroceryItemOrigin(str, Enum):
     ad_hoc = "ad_hoc"
 
 
+class TripState(str, Enum):
+    confirmed_list_ready = "confirmed_list_ready"
+    trip_in_progress = "trip_in_progress"
+    trip_complete_pending_reconciliation = "trip_complete_pending_reconciliation"
+
+
+class SyncAggregateType(str, Enum):
+    grocery_list = "grocery_list"
+    grocery_line = "grocery_line"
+    inventory_item = "inventory_item"
+
+
+class SyncMutationState(str, Enum):
+    queued_offline = "queued_offline"
+    syncing = "syncing"
+    synced = "synced"
+    retrying = "retrying"
+    failed_retryable = "failed_retryable"
+    review_required = "review_required"
+    resolving = "resolving"
+    resolved_keep_mine = "resolved_keep_mine"
+    resolved_use_server = "resolved_use_server"
+
+
+class SyncOutcome(str, Enum):
+    applied = "applied"
+    duplicate_retry = "duplicate_retry"
+    auto_merged_non_overlapping = "auto_merged_non_overlapping"
+    failed_retryable = "failed_retryable"
+    review_required_quantity = "review_required_quantity"
+    review_required_deleted_or_archived = "review_required_deleted_or_archived"
+    review_required_freshness_or_location = "review_required_freshness_or_location"
+    review_required_other_unsafe = "review_required_other_unsafe"
+
+
+class SyncResolutionAction(str, Enum):
+    keep_mine = "keep_mine"
+    use_server = "use_server"
+
+
+class SyncResolutionStatus(str, Enum):
+    pending = "pending"
+    resolved_keep_mine = "resolved_keep_mine"
+    resolved_use_server = "resolved_use_server"
+
+
 class ReconciliationStatus(str, Enum):
     ready_for_review = "ready_for_review"
     review_draft = "review_draft"

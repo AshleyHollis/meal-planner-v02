@@ -2,9 +2,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid #e5e7eb;
-  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
 }
 
 .row:last-child {
@@ -13,6 +13,11 @@
 
 .selected {
   background: #f8fafc;
+  box-shadow: inset 3px 0 0 #4f46e5;
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
+  margin-inline: -0.9rem;
+  border-radius: 14px;
 }
 
 .main {
@@ -50,7 +55,7 @@
 .meta {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.6rem;
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -98,12 +103,13 @@
 
 .reviewBtn,
 .archiveBtn {
-  font-size: 0.78rem;
+  min-height: 44px;
+  font-size: 0.82rem;
   color: #475569;
   background: none;
   border: 1px solid #cbd5e1;
   cursor: pointer;
-  padding: 0.35rem 0.55rem;
+  padding: 0.55rem 0.9rem;
   border-radius: 999px;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }

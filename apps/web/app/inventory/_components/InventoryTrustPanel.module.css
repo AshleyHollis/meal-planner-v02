@@ -119,8 +119,8 @@
 
 .formRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.9rem;
   align-items: start;
 }
 
@@ -129,7 +129,8 @@
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  padding: 0.7rem 0.8rem;
+  min-height: 44px;
+  padding: 0.75rem 0.85rem;
   font: inherit;
   color: #111827;
   background: #ffffff;
@@ -168,7 +169,8 @@
 .secondaryButton {
   border: none;
   border-radius: 999px;
-  padding: 0.7rem 1rem;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -294,5 +296,9 @@
   .card,
   .historyCard {
     padding: 0.9rem;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
   }
 }

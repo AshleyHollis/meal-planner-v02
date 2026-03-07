@@ -7,8 +7,11 @@ import {
   getConfirmedPlan,
   getDraft,
   openDraftFromSuggestion,
+  pollAISuggestionRequest,
+  revertDraftSlot,
   requestAISuggestion,
   requestSlotRegen,
+  updateDraftSlot,
 } from '../../_lib/planner-api';
 import type {
   AISuggestionResult,
@@ -22,6 +25,10 @@ import { LoadingState } from '../../_components/LoadingState';
 import { ErrorState } from '../../_components/ErrorState';
 import { EmptyState } from '../../_components/EmptyState';
 import { SyncStatusBadge } from '../../_components/SyncStatusBadge';
+import {
+  getConfirmButtonLabel,
+  getRegenerationFailureMessage,
+} from '../../_lib/planner-ui';
 import { randomUUID } from '../../_lib/uuid';
 import { AISuggestionBanner } from './AISuggestionBanner';
 import { StaleDraftWarning } from './StaleDraftWarning';
@@ -37,44 +44,10 @@ function isoMonday(offset = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
-const MEAL_TYPES: PlanSlot['mealType'][] = ['breakfast', 'lunch', 'dinner'];
-
 type AsyncState<T> =
   | { status: 'loading' }
   | { status: 'ok'; data: T }
   | { status: 'error'; message: string };
-
-function createSlot(dayOfWeek: number, mealType: PlanSlot['mealType']): PlanSlot {
-  return {
-    slotId: `${dayOfWeek}-${mealType}`,
-    dayOfWeek,
-    mealType,
-    mealTitle: null,
-    mealSummary: null,
-    origin: 'manually_added',
-    reasonCodes: [],
-    explanation: null,
-    slotState: 'idle',
-    originalSuggestion: null,
-    slotMessage: null,
-  };
-}
-
-function createManualDraft(householdId: string, planPeriodStart: string): DraftPlan {
-  return {
-    draftId: `local-draft-${planPeriodStart}`,
-    householdId,
-    planPeriodStart,
-    slots: Array.from({ length: 7 }, (_, dayOfWeek) =>
-      MEAL_TYPES.map((mealType) => createSlot(dayOfWeek, mealType))
-    ).flat(),
-    staleWarning: false,
-    staleWarningAcknowledged: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    suggestionRequestId: null,
-  };
-}
 
 function ensureSlotSnapshots(slots: PlanSlot[]): PlanSlot[] {
   return slots.map((slot) => ({
@@ -87,6 +60,8 @@ function ensureSlotSnapshots(slots: PlanSlot[]): PlanSlot[] {
             mealSummary: slot.mealSummary,
             reasonCodes: slot.reasonCodes,
             explanation: slot.explanation,
+            usesOnHand: slot.usesOnHand,
+            missingHints: slot.missingHints,
           }
         : null),
     slotMessage: slot.slotMessage ?? null,
@@ -108,24 +83,6 @@ function normalizeConfirmed(plan: ConfirmedPlan): ConfirmedPlan {
       slotState: 'idle',
       slotMessage: null,
     })),
-  };
-}
-
-function buildLocalDraftFromSuggestion(
-  suggestion: AISuggestionResult,
-  householdId: string,
-  planPeriodStart: string
-): DraftPlan {
-  return {
-    draftId: `local-draft-${suggestion.suggestionId}`,
-    householdId,
-    planPeriodStart,
-    slots: ensureSlotSnapshots(suggestion.slots),
-    staleWarning: suggestion.isStale,
-    staleWarningAcknowledged: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    suggestionRequestId: suggestion.requestId,
   };
 }
 
@@ -162,9 +119,9 @@ export function PlannerView() {
 
     try {
       const [suggestionResult, draftResult, confirmedResult] = await Promise.all([
-        getAISuggestion(user.householdId, periodStart),
-        getDraft(user.householdId, periodStart),
-        getConfirmedPlan(user.householdId, periodStart),
+        getAISuggestion(user.activeHouseholdId, periodStart),
+        getDraft(user.activeHouseholdId, periodStart),
+        getConfirmedPlan(user.activeHouseholdId, periodStart),
       ]);
 
       setSuggestion({ status: 'ok', data: suggestionResult });
@@ -194,16 +151,38 @@ export function PlannerView() {
   }, [activeDraft?.draftId, activeDraft?.staleWarningAcknowledged]);
 
   useEffect(() => {
-    if (!user || suggestion.status !== 'ok' || suggestion.data?.status !== 'generating') {
+    if (
+      !user ||
+      suggestion.status !== 'ok' ||
+      suggestion.data?.status !== 'generating' ||
+      !suggestion.data.requestId
+    ) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      void loadAll();
-    }, 2500);
+      void pollAISuggestionRequest(user.activeHouseholdId, suggestion.data!.requestId!, {
+        maxAttempts: 1,
+        planPeriodStart: periodStart,
+      })
+        .then((result) => {
+          setSuggestion({ status: 'ok', data: result });
+          if (result.status !== 'generating') {
+            setPlannerStatus('idle');
+            void loadAll();
+          }
+        })
+        .catch(() => {
+          setPlannerStatus('error');
+          setSuggestion({
+            status: 'error',
+            message: 'Could not refresh planner request status.',
+          });
+        });
+    }, 1500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [suggestion, loadAll, user]);
+  }, [suggestion, loadAll, periodStart, user]);
 
   const editorSlot = useMemo(
     () => activeDraft?.slots.find((slot) => slot.slotId === editorSlotId) ?? null,
@@ -216,7 +195,7 @@ export function PlannerView() {
       activeSuggestion.slots.length > 0
   );
 
-  function updateDraftSlot(slotId: string, updater: (slot: PlanSlot) => PlanSlot) {
+  function replaceDraftSlot(slotId: string, nextSlot: PlanSlot) {
     setDraft((previous) => {
       if (previous.status !== 'ok' || !previous.data) {
         return previous;
@@ -228,7 +207,7 @@ export function PlannerView() {
           ...previous.data,
           updatedAt: new Date().toISOString(),
           slots: previous.data.slots.map((slot) =>
-            slot.slotId === slotId ? updater(slot) : slot
+            slot.slotId === slotId ? nextSlot : slot
           ),
         },
       };
@@ -240,36 +219,22 @@ export function PlannerView() {
 
     setPlannerStatus('syncing');
     setRequestMessage(null);
-    setSuggestion({
-      status: 'ok',
-      data: {
-        suggestionId: `pending-${periodStart}`,
-        requestId: null,
-        householdId: user.householdId,
-        planPeriodStart: periodStart,
-        status: 'generating',
-        slots: [],
-        isStale: false,
-        fallbackMode: 'none',
-        createdAt: new Date().toISOString(),
-      },
-    });
 
     try {
       const result = await requestAISuggestion(
-        user.householdId,
+        user.activeHouseholdId,
         periodStart,
         randomUUID()
       );
       setSuggestion({ status: 'ok', data: result });
-      setPlannerStatus('idle');
+      setPlannerStatus(result.status === 'generating' ? 'syncing' : 'idle');
     } catch {
       setSuggestion({
         status: 'ok',
         data: {
           suggestionId: `failed-${periodStart}`,
           requestId: null,
-          householdId: user.householdId,
+          householdId: user.activeHouseholdId,
           planPeriodStart: periodStart,
           status: 'failed',
           slots: [],
@@ -280,7 +245,7 @@ export function PlannerView() {
       });
       setPlannerStatus('error');
       setRequestMessage(
-        'AI suggestion requests are unavailable right now. You can still create and edit a manual draft.'
+        'AI suggestion requests are unavailable right now. Please retry once the planner service is reachable.'
       );
     }
   }
@@ -288,100 +253,64 @@ export function PlannerView() {
   async function handleOpenDraft() {
     if (!user || !activeSuggestion) return;
 
-    if (activeDraft && !window.confirm('Replace the draft already in progress?')) {
+    const replaceExisting =
+      Boolean(activeDraft) && window.confirm('Replace the draft already in progress?');
+    if (activeDraft && !replaceExisting) {
       return;
     }
 
     try {
       const openedDraft = await openDraftFromSuggestion(
-        user.householdId,
-        activeSuggestion.suggestionId
+        user.activeHouseholdId,
+        activeSuggestion.suggestionId,
+        { replaceExisting }
       );
       setDraft({ status: 'ok', data: normalizeDraft(openedDraft) });
+      setRequestMessage(null);
     } catch {
-      setDraft({
-        status: 'ok',
-        data: buildLocalDraftFromSuggestion(activeSuggestion, user.householdId, periodStart),
-      });
       setRequestMessage(
-        'Opened a local draft from the suggestion. Confirmation still depends on the backend plan contract.'
+        'Could not open the planner draft from the latest suggestion. Please refresh and try again.'
       );
     }
   }
 
-  function handleCreateManualDraft() {
-    if (!user) return;
-
-    if (activeDraft && !window.confirm('Replace the draft already in progress?')) {
+  async function handleSaveSlot(slotId: string, mealTitle: string, mealSummary: string) {
+    if (!user || draft.status !== 'ok' || !draft.data) {
       return;
     }
 
-    setDraft({
-      status: 'ok',
-      data: createManualDraft(user.householdId, periodStart),
-    });
-    setRequestMessage(null);
-    setEditorSlotId(null);
+    setPlannerStatus('syncing');
+    try {
+      const slot = await updateDraftSlot(user.activeHouseholdId, draft.data.draftId, slotId, {
+        mealTitle: mealTitle.trim() || null,
+        mealSummary: mealSummary.trim() || null,
+      });
+      replaceDraftSlot(slotId, slot);
+      setEditorSlotId(null);
+      setRequestMessage(null);
+      setPlannerStatus('idle');
+    } catch {
+      setPlannerStatus('error');
+      setRequestMessage('Could not save that slot. Please try again.');
+    }
   }
 
-  function handleSaveSlot(slotId: string, mealTitle: string, mealSummary: string) {
-    updateDraftSlot(slotId, (slot) => {
-      const normalizedTitle = mealTitle.trim();
-      const normalizedSummary = mealSummary.trim() || null;
+  async function handleRestoreOriginal(slotId: string) {
+    if (!user || draft.status !== 'ok' || !draft.data) {
+      return;
+    }
 
-      if (
-        slot.originalSuggestion &&
-        normalizedTitle === (slot.originalSuggestion.mealTitle ?? '') &&
-        normalizedSummary === slot.originalSuggestion.mealSummary
-      ) {
-        return {
-          ...slot,
-          mealTitle: slot.originalSuggestion.mealTitle,
-          mealSummary: slot.originalSuggestion.mealSummary,
-          reasonCodes: slot.originalSuggestion.reasonCodes,
-          explanation: slot.originalSuggestion.explanation,
-          origin: 'ai_suggested',
-          slotState: 'idle',
-          slotMessage: 'Restored the original AI suggestion.',
-        };
-      }
-
-      return {
-        ...slot,
-        mealTitle: normalizedTitle || null,
-        mealSummary: normalizedSummary,
-        origin: slot.originalSuggestion ? 'user_edited' : 'manually_added',
-        reasonCodes: [],
-        explanation: null,
-        slotState: 'idle',
-        slotMessage: normalizedTitle
-          ? 'Manual edit saved.'
-          : 'Slot cleared. You can regenerate or restore it later.',
-      };
-    });
-
-    setEditorSlotId(null);
-  }
-
-  function handleRestoreOriginal(slotId: string) {
-    updateDraftSlot(slotId, (slot) => {
-      if (!slot.originalSuggestion) {
-        return slot;
-      }
-
-      return {
-        ...slot,
-        mealTitle: slot.originalSuggestion.mealTitle,
-        mealSummary: slot.originalSuggestion.mealSummary,
-        reasonCodes: slot.originalSuggestion.reasonCodes,
-        explanation: slot.originalSuggestion.explanation,
-        origin: 'ai_suggested',
-        slotState: 'idle',
-        slotMessage: 'Restored the original AI suggestion.',
-      };
-    });
-
-    setEditorSlotId(null);
+    setPlannerStatus('syncing');
+    try {
+      const slot = await revertDraftSlot(user.activeHouseholdId, draft.data.draftId, slotId);
+      replaceDraftSlot(slotId, slot);
+      setEditorSlotId(null);
+      setRequestMessage(null);
+      setPlannerStatus('idle');
+    } catch {
+      setPlannerStatus('error');
+      setRequestMessage('Could not restore the original suggestion for that slot.');
+    }
   }
 
   async function handleRegenerateSlot(slotId: string) {
@@ -391,49 +320,77 @@ export function PlannerView() {
     if (!currentSlot) return;
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      updateDraftSlot(slotId, (slot) => ({
-        ...slot,
+      replaceDraftSlot(slotId, {
+        ...currentSlot,
         slotState: 'regen_failed',
         slotMessage: 'Reconnect to request a new suggestion for this slot.',
-      }));
+      });
       setPlannerStatus('offline');
       return;
     }
 
-    updateDraftSlot(slotId, (slot) => ({
-      ...slot,
+    replaceDraftSlot(slotId, {
+      ...currentSlot,
       slotState: 'pending_regen',
       slotMessage: null,
-    }));
+    });
     setPlannerStatus('syncing');
 
     try {
-      await requestSlotRegen(user.householdId, draft.data.draftId, slotId, randomUUID());
-      updateDraftSlot(slotId, (slot) => ({
-        ...slot,
+      const regenRequest = await requestSlotRegen(
+        user.activeHouseholdId,
+        draft.data.draftId,
+        slotId,
+        randomUUID()
+      );
+      replaceDraftSlot(slotId, {
+        ...currentSlot,
         slotState: 'regenerating',
         slotMessage: 'Waiting for the updated suggestion…',
-      }));
+      });
 
-      const refreshedDraft = await getDraft(user.householdId, periodStart);
+      const regenResult = await pollAISuggestionRequest(
+        user.activeHouseholdId,
+        regenRequest.requestId ?? regenRequest.suggestionId,
+        {
+          maxAttempts: 10,
+          delayMs: 150,
+          planPeriodStart: periodStart,
+        }
+      );
+
+      const refreshedDraft = await getDraft(user.activeHouseholdId, periodStart);
       if (refreshedDraft) {
-        setDraft({ status: 'ok', data: normalizeDraft(refreshedDraft) });
+        const normalizedDraft = normalizeDraft(refreshedDraft);
+        setDraft({ status: 'ok', data: normalizedDraft });
+
+        if (
+          regenResult.status === 'failed' ||
+          regenResult.status === 'insufficient_context' ||
+          regenResult.fallbackMode === 'manual_guidance'
+        ) {
+          const recoveredSlot =
+            normalizedDraft.slots.find((slot) => slot.slotId === slotId) ?? currentSlot;
+          replaceDraftSlot(slotId, {
+            ...recoveredSlot,
+            slotState: 'regen_failed',
+            slotMessage: `${getRegenerationFailureMessage(recoveredSlot)} AI could not produce a better replacement from the current context.`,
+          });
+          setPlannerStatus(regenResult.status === 'failed' ? 'error' : 'idle');
+          return;
+        }
+
         setPlannerStatus('idle');
         return;
       }
 
       throw new Error('No refreshed draft available yet.');
     } catch {
-      updateDraftSlot(slotId, (slot) => ({
-        ...slot,
-        mealTitle: slot.originalSuggestion?.mealTitle ?? slot.mealTitle,
-        mealSummary: slot.originalSuggestion?.mealSummary ?? slot.mealSummary,
-        reasonCodes: slot.originalSuggestion?.reasonCodes ?? slot.reasonCodes,
-        explanation: slot.originalSuggestion?.explanation ?? slot.explanation,
-        origin: slot.originalSuggestion ? 'ai_suggested' : slot.origin,
+      replaceDraftSlot(slotId, {
+        ...currentSlot,
         slotState: 'regen_failed',
-        slotMessage: 'Could not regenerate this slot. Retry or edit it manually.',
-      }));
+        slotMessage: getRegenerationFailureMessage(currentSlot),
+      });
       setPlannerStatus('error');
     }
   }
@@ -453,7 +410,7 @@ export function PlannerView() {
     setPlannerStatus('syncing');
 
     try {
-      await confirmDraft(user.householdId, draft.data.draftId, {
+      await confirmDraft(user.activeHouseholdId, draft.data.draftId, {
         clientMutationId: randomUUID(),
         staleWarningAcknowledged: draft.data.staleWarning ? staleAcknowledged : false,
       });
@@ -528,6 +485,8 @@ export function PlannerView() {
         <>
           <AISuggestionBanner
             status={activeSuggestion?.status ?? 'idle'}
+            fallbackMode={activeSuggestion?.fallbackMode}
+            hasConfirmedPlan={Boolean(activeConfirmedPlan)}
             isStale={activeSuggestion?.isStale}
             onOpenDraft={hasSuggestionToReview ? handleOpenDraft : undefined}
             onRequestNew={handleRequestSuggestion}
@@ -535,30 +494,50 @@ export function PlannerView() {
 
           {requestMessage && <p className={styles.note}>{requestMessage}</p>}
 
-          {activeConfirmedPlan && !activeDraft && (
+          {activeConfirmedPlan && (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Confirmed plan</h2>
+                <h2 className={styles.sectionTitle}>
+                  {activeDraft || hasSuggestionToReview ? 'Current confirmed plan' : 'Confirmed plan'}
+                </h2>
                 <span className={styles.sectionMeta}>
-                  Confirmed {new Date(activeConfirmedPlan.confirmedAt).toLocaleString()}
+                  {activeDraft || hasSuggestionToReview
+                    ? 'Still active until you explicitly confirm a replacement.'
+                    : `Confirmed ${new Date(activeConfirmedPlan.confirmedAt).toLocaleString()}`}
                 </span>
               </div>
-              <WeeklyGrid plan={activeConfirmedPlan} showOriginBadges={false} />
+              <WeeklyGrid
+                plan={activeConfirmedPlan}
+                showOriginBadges={false}
+                showSuggestionMeta={false}
+              />
+            </section>
+          )}
+
+          {!activeDraft && hasSuggestionToReview && activeSuggestion && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Latest AI suggestion</h2>
+                <span className={styles.sectionMeta}>
+                  Review the proposed meals before opening an editable draft.
+                </span>
+              </div>
+              <WeeklyGrid plan={activeSuggestion} />
             </section>
           )}
 
           {activeDraft ? (
-            <>
+            <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Editable draft</h2>
-                <span className={styles.sectionMeta}>Mix AI suggestions with manual edits.</span>
+                <span className={styles.sectionMeta}>
+                  {activeConfirmedPlan
+                    ? 'Confirming this draft will replace the current confirmed plan.'
+                    : 'Mix AI suggestions with manual edits.'}
+                </span>
               </div>
 
-              <StaleDraftWarning
-                visible={activeDraft.staleWarning}
-                acknowledged={staleAcknowledged}
-                onAcknowledgeChange={setStaleAcknowledged}
-              />
+              <StaleDraftWarning visible={activeDraft.staleWarning} />
 
               <WeeklyGrid
                 plan={activeDraft}
@@ -568,34 +547,33 @@ export function PlannerView() {
               />
 
               <div className={styles.confirmRow}>
-                {confirmError && <p className={styles.confirmError}>{confirmError}</p>}
-                <button
-                  className={styles.secondaryButton}
-                  onClick={handleCreateManualDraft}
-                  type="button"
-                >
-                  Start over manually
-                </button>
+                <div className={styles.confirmCopy}>
+                  {activeDraft.staleWarning && (
+                    <StaleDraftWarning
+                      visible
+                      acknowledged={staleAcknowledged}
+                      onAcknowledgeChange={setStaleAcknowledged}
+                    />
+                  )}
+                  {confirmError && <p className={styles.confirmError}>{confirmError}</p>}
+                </div>
                 <button
                   className={styles.confirmButton}
                   onClick={handleConfirm}
                   disabled={confirming}
                   type="button"
                 >
-                  {confirming ? 'Confirming…' : 'Confirm plan'}
+                  {getConfirmButtonLabel(Boolean(activeConfirmedPlan), confirming)}
                 </button>
               </div>
-            </>
+            </section>
           ) : (
             <EmptyState
               icon="📅"
               title="No draft plan yet"
-              description="Request a fresh AI suggestion or start a manual draft. Existing confirmed plans stay protected until you explicitly confirm a replacement."
+              description="Request a fresh AI suggestion to open a backend draft for this week. Existing confirmed plans stay protected until you explicitly confirm a replacement."
               action={
                 <div className={styles.emptyActions}>
-                  <button className={styles.secondaryButton} onClick={handleCreateManualDraft} type="button">
-                    Start manual draft
-                  </button>
                   <button className={styles.confirmButton} onClick={handleRequestSuggestion} type="button">
                     Request AI suggestion
                   </button>

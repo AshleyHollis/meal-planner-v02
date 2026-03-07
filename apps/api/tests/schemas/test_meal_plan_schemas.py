@@ -49,7 +49,7 @@ def test_meal_plan_slot_create_valid():
         explanation_entries='["Uses broccoli already in the fridge"]',
         prompt_family="weekly-v1",
         prompt_version="v1.0",
-        fallback_mode=False,
+        fallback_mode="none",
         regen_status="idle",
     )
     assert slot.slot_origin == SlotOrigin.ai_suggested
@@ -119,7 +119,7 @@ def test_meal_plan_slot_history_read_captures_confirmation_audit_fields():
         explanation_entries='["Uses expiring yogurt"]',
         prompt_family="weekly-v1",
         prompt_version="v1.0",
-        fallback_mode=False,
+        fallback_mode="none",
         stale_warning_present_at_confirmation=True,
         confirmed_at="2025-01-01T12:00:00Z",
         created_at="2025-01-01T12:00:00Z",

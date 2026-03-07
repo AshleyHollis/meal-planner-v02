@@ -1,8 +1,8 @@
-// API client — wraps fetch against the backend.
-// The frontend never calls Auth0 directly; session tokens come from the API.
+// API client — defaults to the same-origin Next.js proxy and can target an
+// explicit backend when an absolute API base URL is configured.
 
 const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-const API_BASE = configuredApiBase !== undefined ? configuredApiBase : 'http://localhost:8000';
+const API_BASE = configuredApiBase !== undefined ? configuredApiBase.replace(/\/$/, '') : '';
 
 type ErrorMessageBody = {
   detail?: unknown;

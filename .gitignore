@@ -1,6 +1,8 @@
 # JavaScript / Node
 node_modules/
 .next/
+.next-dev/
+.next-prod/
 dist/
 coverage/
 
@@ -38,4 +40,7 @@ apps/api/build/
 *.egg-info/
 *.tsbuildinfo
 playwright-report/
+.playwright-artifacts/
+.playwright/
 test-results/
+

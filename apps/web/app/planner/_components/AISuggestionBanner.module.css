@@ -14,9 +14,21 @@
   flex-shrink: 0;
 }
 
-.label {
+.copy {
   flex: 1;
+  min-width: min(20rem, 100%);
+}
+
+.label {
+  display: block;
   min-width: 0;
+}
+
+.detail {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  opacity: 0.88;
 }
 
 .stale {

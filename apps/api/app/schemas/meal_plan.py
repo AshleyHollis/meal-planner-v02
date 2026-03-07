@@ -61,7 +61,7 @@ class MealPlanSlotCreate(BaseModel):
     explanation_entries: Optional[str] = None
     prompt_family: Optional[str] = None
     prompt_version: Optional[str] = None
-    fallback_mode: Optional[bool] = None
+    fallback_mode: Optional[str] = None
     regen_status: PlanSlotRegenStatus = PlanSlotRegenStatus.idle
     pending_regen_request_id: Optional[str] = None
     notes: Optional[str] = None
@@ -83,7 +83,7 @@ class MealPlanSlotRead(BaseModel):
     explanation_entries: Optional[str]
     prompt_family: Optional[str]
     prompt_version: Optional[str]
-    fallback_mode: Optional[bool]
+    fallback_mode: Optional[str]
     regen_status: PlanSlotRegenStatus
     pending_regen_request_id: Optional[str]
     is_user_locked: bool
@@ -106,7 +106,7 @@ class MealPlanSlotHistoryRead(BaseModel):
     explanation_entries: Optional[str]
     prompt_family: Optional[str]
     prompt_version: Optional[str]
-    fallback_mode: Optional[bool]
+    fallback_mode: Optional[str]
     stale_warning_present_at_confirmation: bool
     confirmed_at: datetime
     created_at: datetime
