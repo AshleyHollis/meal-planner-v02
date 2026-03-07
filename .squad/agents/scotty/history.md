@@ -125,3 +125,75 @@
 - The current local-dev path does not require Terraform or shared-infra changes to prove bootstrap/auth behavior; those remain separate preview/prod concerns for real Auth0 provisioning and deployment wiring.
 - For Aspire-local verification, the correct user-facing entry point is the web resource on port `3000`; probing `http://127.0.0.1:8000` directly is misleading because Aspire assigns the API its own endpoint and the Next proxy owns the browser contract.
 - I did not publish or push anything during verification because the repository already contained unrelated in-progress changes from other teammates; local validation was completed without disturbing that shared work.
+
+## AIPLAN-02 / AIPLAN-03 Backend Slice — 2026-03-08
+
+### What changed
+- Added a SQL-backed `PlannerService` plus `app/routers/planner.py` so the backend now owns household-scoped planner suggestion requests, request/result polling, draft open/read, slot edit/revert, slot regeneration entrypoints, confirmation, and confirmed-plan reads.
+- Kept AI request/result rows, editable draft rows, and confirmed plan rows distinct while wiring idempotent request creation, active-request dedupe by household + period + slot scope, stale-warning inheritance, and confirmation idempotency.
+- Refreshed the web planner client seam so it can parse backend-provided original-suggestion snapshots and poll the canonical request endpoint when a suggestion request is still generating.
+
+### Learnings
+- Using `ai_suggestion_result_id` + `slot_key` as the revert source is enough to restore original AI content without inventing a second draft-only copy of the same suggestion payload.
+- Keeping both a period-scoped planner read and a request-ID polling read is a practical bridge between the current planner UI scaffold and the approved worker-centric AI lifecycle.
+- Backend enforcement still matters even when the current UI does some local optimism: stale-warning acknowledgement and household path/session matching need to stay server-side or the trust boundary gets fuzzy again.
+
+## AIPLAN-05 Confirmation Hardening — 2026-03-08
+
+### What changed
+- Added planner-side stale detection that compares completed suggestion requests against the worker grounding hash, so draft reads and confirmation can surface honest stale warnings after inventory/context drift instead of relying only on manually forced stale statuses.
+- Kept confirmed plans protected while allowing new review cycles by leaving prior confirmed rows intact, bumping the newly confirmed plan version for the same household/period, and continuing to keep suggestion, draft, and confirmed records separate.
+- Added durable `planner_events` storage plus a `plan_confirmed` payload written in the same confirmation transaction as the confirmed plan mutation and per-slot provenance history.
+
+### Learnings
+- Grounding hashes are useful beyond worker-side reuse: re-evaluating them during planner reads gives a lightweight stale-warning trigger without introducing a second planner-specific freshness ledger.
+- If a downstream trigger matters to trust-sensitive workflows, persisting it in the same transaction as the authoritative mutation is safer than relying on an after-response callback that can be lost on retries or process interruption.
+- Versioning a newly confirmed plan against the latest confirmed sibling for the same period is a simple way to preserve append-only confirmed history while still letting “latest confirmed” reads stay deterministic.
+
+## AIPLAN-09 / AIPLAN-10 Handoff Hardening — 2026-03-08
+
+### What changed
+- Hardened the `plan_confirmed` event payload so the grocery handoff is explicit: downstream consumers now get a `grocery_refresh_trigger` contract that states the source is a confirmed plan, includes the confirmed plan/version identifiers, and carries the lifecycle correlation ID.
+- Added planner lifecycle observability in both API and worker code so suggestion, draft-open, regeneration, confirmation, request reuse, completion, fallback, and unexpected failure paths all emit structured logs with correlation IDs.
+- Introduced deterministic worker-side provider fixtures plus an explicit unexpected-failure regression so happy path, stale drift, fallback/manual guidance, and durable failure handling are all covered by repeatable tests.
+
+### Learnings
+- If a downstream seam must never consume draft or suggestion state, encoding the authoritative source status directly into the event payload is safer than depending on naming conventions alone.
+- Reusing the originating AI request ID as the correlation ID gives API logs, worker logs, and downstream handoff payloads one diagnosable thread without adding extra persistence columns.
+- Worker paths still need a durable failure state even when most provider problems degrade to fallback; otherwise true runtime faults disappear into crashes instead of becoming supportable request outcomes.
+
+## GROC-02 / GROC-04 Backend Activation — 2026-03-08
+
+### What changed
+- Added a SQL-backed `GroceryService` plus `app/routers/grocery.py`, activating derive, current read, detail read, re-derive, add ad hoc, adjust line, remove line, and confirm routes under household-scoped backend session enforcement.
+- Implemented authoritative grocery derivation from confirmed plans plus authoritative inventory with exact-name/exact-unit offsets, duplicate consolidation, remaining-to-buy calculation, incomplete-slot warnings, stale-draft detection, and durable list/version persistence.
+- Wired re-derive so ad hoc lines and user quantity overrides survive forward into the new draft version, while confirmed lists remain immutable and spawn a fresh draft instead of being overwritten.
+
+### Learnings
+- A temporary ingredient-catalog seam keyed by `meal_reference_id` is a practical Wave 1 bridge when grocery rules are ready before the real recipe store exists, as long as missing ingredient data stays explicit and produces warnings instead of invented lines.
+- Grocery idempotency is easiest to keep honest when the receipt stores the full mutation envelope, not just identifiers; duplicate retries can then replay the original accepted response even after the list changes again later.
+- Stale-draft detection can stay lightweight by comparing the stored confirmed-plan version and an inventory snapshot hash at read time; the backend does not need a separate grocery event processor just to tell the client a draft has drifted.
+
+## GROC-03 Refresh and Stale-Draft Orchestration — 2026-03-08
+
+### What changed
+- Extended `GroceryService` so it now consumes unpublished `plan_confirmed` events, auto-derives a draft when the confirmed period has no grocery list yet, refreshes an existing draft in place, and spawns a new draft instead of mutating a confirmed list.
+- Tightened grocery stale detection so inventory drift is scoped only to ingredient names/units relevant to the confirmed plan, preventing unrelated household inventory edits from falsely staling a grocery draft.
+- Wired planner confirmation and inventory mutation routes to trigger best-effort grocery orchestration immediately after the authoritative planner/inventory write succeeds, while keeping the durable planner event as the source of truth for refresh intent.
+
+### Learnings
+- Using the persisted `planner_events` row as the consumption source keeps planner→grocery refresh idempotent and diagnosable; the router can trigger processing without creating a second handoff contract.
+- Relevant-inventory stale detection must be computed from the confirmed plan's ingredient surface, not the entire household inventory snapshot, or harmless pantry churn will create noisy stale drafts.
+- Best-effort orchestration after the authoritative write is a safer MVP posture than coupling planner confirmation or inventory mutation success to a downstream grocery refresh side effect.
+
+## GROC-08 / GROC-09 Handoff and Observability Hardening — 2026-03-08
+
+### What changed
+- Added explicit grocery handoff read-model seams: `grocery_list_version_id` now names the current/confirmed snapshot version, and each line now exposes a stable `grocery_line_id` backed by a persisted `stable_line_id` that survives logical carry-forward across re-derives.
+- Hardened grocery observability so derivation, incomplete-slot warnings, stale detection, and confirmation all emit structured diagnostics with correlation IDs and list/version identifiers.
+- Added a follow-on migration plus deterministic grocery diagnostics fixtures and regression coverage for confirmed-list identity stability, correlation-aware stale detection, and confirmation diagnostics.
+
+### Learnings
+- Downstream trip/reconciliation work should not infer the authoritative grocery snapshot from mutable list-row conventions; exposing the version identity explicitly keeps offline/trip seams honest before those milestones land.
+- Stable line references need to be decoupled from per-version row primary keys; otherwise any re-derive/carry-forward implementation detail leaks into downstream contracts.
+- In a multi-step derived workflow, correlation IDs are most useful when they flow through both success and warning diagnostics; incomplete-slot and stale-detection logs are much easier to support when they share the same thread as the triggering mutation.

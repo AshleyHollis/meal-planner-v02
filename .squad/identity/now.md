@@ -1,33 +1,32 @@
 # Current Focus
 
 - Milestone 2 (Weekly planner and explainable AI suggestions): **✅ COMPLETE AND APPROVED.** All 12 tasks done; Kirk signed off 2026-03-08.
-- Milestone 3 (Grocery derivation and review): **✅ CRITICAL PATH COMPLETE, FINAL GATES READY.**
-  - **All 9 critical-path tasks complete:** GROC-01 through GROC-09 delivered and verified.
-  - **Backend derivation complete:** Scotty completed GROC-02 (SQL-backed derivation engine) and GROC-04 (grocery router). Derivation is live, tested, and approved.
-  - **Frontend wiring complete:** Uhura completed GROC-06 (real API contracts) and GROC-07 (review UX). Web client uses backend-owned household context and approved lifecycle states.
-  - **Handoff seams complete:** Scotty completed GROC-08 (confirmed-list version/line identity for trip and reconciliation) and GROC-09 (observability and deterministic fixtures).
-  - **Full application verified:** 171 API tests passing, 33 web tests passing, 9 worker tests passing. Web lint, typecheck, and build all green.
-  - **GROC-10 (McCoy) ready:** E2E verification gate unblocked. Final acceptance before GROC-11 (Kirk final review).
+- Milestone 3 (Grocery derivation and review): **✅ COMPLETE AND APPROVED.** All 11 tasks done; Kirk signed off GROC-11 2026-03-09.
+- **Milestone 4 execution advancing:** Offline sync, trip mode, conflict review. SYNC-01 ✅ complete (Sulu locked contract seam 2026-03-09T02-00-00Z). SYNC-02 ✅ complete (Uhura offline store 2026-03-09), SYNC-03 ✅ complete (Uhura trip UX 2026-03-09), SYNC-04 ✅ complete (Scotty upload API 2026-03-09), SYNC-05 ✅ complete (Scotty classifier 2026-03-09). **SYNC-06 now active** (Scotty explicit resolution commands, ready_now). Local dev environment restored 2026-03-09T06-00-00Z.
+- **CURRENT SESSION (Ashley Hollis, 2026-03-09):** Full application Milestone 4 build continuing. Local dev environment stable and responsive.
+  - **Status:** SYNC-01 through SYNC-05 complete; SYNC-06 (resolution commands) now active; SYNC-07/08 ready to queue; SYNC-09/10/11 verification gates queued.
+  - **Environment:** Local Aspire running (4 dotnet + 5 node + 10 Python processes); web, API, worker services all responsive; all build/test tools operational; database schema stable.
+  - **Governance:** Manual visual smoke testing mandatory at milestone end (built into SYNC-10); separation of testing and review confirmed; no staffing blockers.
 - Locked constraints: Backend-only Auth0, AI-advisory-only, confirmed-plan-protection, SQL-backed trust data, roadmap-aware grocery-derivation dependencies, Milestone 3 scope cut-line (no trip/reconciliation work).
 
 
-## Milestone 3 Execution Status (Complete through GROC-09)
+## Milestone 4 Execution Status (Active — SYNC-06 Ready; SYNC-01–05 Complete)
 
 | Task | Owner | Status | Completion |
 | --- | --- | --- | --- |
-| GROC-01 | Sulu | ✅ done | 2026-03-08 |
-| GROC-02 | Scotty | ✅ done | 2026-03-08 |
-| GROC-03 | Scotty | ✅ done | 2026-03-08 |
-| GROC-04 | Scotty | ✅ done | 2026-03-08 |
-| GROC-05 | McCoy | ✅ done | 2026-03-08 |
-| GROC-06 | Uhura | ✅ done | 2026-03-08 |
-| GROC-07 | Uhura | ✅ done | 2026-03-08 |
-| GROC-08 | Scotty | ✅ done | 2026-03-08 |
-| GROC-09 | Scotty | ✅ done | 2026-03-08 |
-| GROC-10 | McCoy | ready_now | — |
-| GROC-11 | Kirk | pending | — |
+| SYNC-01 | Sulu | ✅ done | 2026-03-09T02-00-00Z |
+| SYNC-02 | Uhura | ✅ done | 2026-03-09 |
+| SYNC-03 | Uhura | ✅ done | 2026-03-09 |
+| SYNC-04 | Scotty | ✅ done | 2026-03-09 |
+| SYNC-05 | Scotty | ✅ done | 2026-03-09 |
+| SYNC-06 | Scotty | 🚀 ready_now | — |
+| SYNC-07 | Uhura | pending | — |
+| SYNC-08 | Scotty | pending | — |
+| SYNC-09 | McCoy | pending | — |
+| SYNC-10 | McCoy | pending | — |
+| SYNC-11 | Kirk | pending | — |
 
-**Execution status:** 9/11 Milestone 3 tasks complete. GROC-10 and GROC-11 (final acceptance gates) ready to execute. **Milestone 3 critical path APPROVED.**
+**Execution status:** 5/11 Milestone 4 tasks complete (SYNC-01–05); 1/11 ready to start (SYNC-06). **Local dev environment restored (2026-03-09T06-00-00Z):** build cache corruption resolved; typecheck, lint, build, all tests passing; web/API/worker services responsive. SYNC-07 and SYNC-08 ready to queue after SYNC-06 gate. All prerequisites satisfied for continuous integration and verification workflows.
 
 ## ✅ RESOLVED: Milestone 3 Critical Path Complete and Verified (2026-03-08T22-00-00Z)
 

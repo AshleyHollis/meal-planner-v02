@@ -12,6 +12,7 @@ This roadmap turns the approved constitution, PRD, and architecture into a pract
 - **Constitution first:** mobile shopping, offline support, shared-household safety, trustworthy inventory, and explainable AI are built into MVP milestones rather than deferred.
 - **Thin client, explicit API:** the roadmap follows the approved architecture of a Next.js client over FastAPI contracts with Python workers for retryable or heavy work.
 - **Quality is part of delivery:** testability, preview environments, observability, and conflict handling are treated as release-enabling work, not cleanup.
+- **Independent verification is mandatory:** the person who implements a slice cannot be the one who closes its testing or final acceptance gate. Named squad roles help route ownership, but reviewer independence must be real human separation, not just a different label on the same implementation work.
 
 ## 3. Delivery Assumptions
 - The approved working architecture is: Next.js + TypeScript web app, FastAPI API, Python workers, IndexedDB-class offline client storage, SQL Server/Azure SQL, Azure Storage Queues, Auth0, Aspire, Azure, Terraform, and GitHub Actions.

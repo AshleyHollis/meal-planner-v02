@@ -1741,3 +1741,96 @@ pm run test:worker → 9 passed ✅
 
 Route to **Kirk** for GROC-11 final Milestone 3 acceptance review. Kirk should confirm the approved grocery implementation still respects the roadmap cut line and did not quietly absorb Milestone 4 trip-mode or Milestone 5 reconciliation scope.
 
+
+---
+
+## Decision: Mandatory Manual Visual Smoke Testing for Spec Completion (2026-03-09 — Ashley Hollis)
+
+**Date:** 2026-03-09  
+**Owner:** Ashley Hollis  
+**Context:** Milestones 1–3 proved spec depth and backend rigor, but Milestone 4 (mobile trip mode, conflict review) and Milestone 5 (reconciliation) require high-quality UX as a constitutional priority. Code review and automated testing alone cannot validate touch targets, gesture clarity, offline feedback, or conflict-resolution presentation. Existing team lacks explicit UX expertise and this gap must be visible now for Milestone 4 planning.
+
+### Decision
+
+All **milestone completions** must include **one mandatory manual local Aspire app review** before the milestone is called complete.
+
+- **When:** Run it **once at the end of the milestone**, after the milestone's implementation and automated verification tasks are green, as part of the **last milestone-end verification step** that assembles user-journey evidence. Do **not** repeat the smoke test at every intermediate verify or final-acceptance sub-step inside the milestone.
+- **How:** Run the local app, visually inspect the milestone's delivered journeys on desktop and phone-sized viewports, validate UX against spec intent, and note any gaps or concerns honestly.
+- **Recording:** Capture the smoke result in the milestone progress log and milestone closure decision/acceptance entry so the final reviewer can consume the same evidence instead of rerunning it by default.
+- **Team Responsibility:** The owner of the milestone's final user-journey verification gate performs the smoke pass; the final approver confirms that evidence before closing the milestone.
+
+### Rationale
+
+- **Constitution 2.1 (Mobile Shopping First), 2.3 (Shared Household Coordination):** These pillars require high-quality UX; Milestone 4 conflict resolution is explicitly user-facing and must be validated against running code.
+- **Team Staffing Clarity:** Current team (Kirk, Scotty, Uhura, Sulu, McCoy) has backend/data strength but no dedicated UX role. Manual smoke testing will surface whether UI/UX work requires specialist skills or can proceed with current team.
+- **Risk Mitigation:** Automated tests miss usability issues (accessibility, touch targets, cognitive load, offline clarity). Mobile trip mode and conflict review are high-risk UX features; smoke testing is the earliest catch point.
+
+### Consequences
+
+- **Milestone closure now includes mandatory smoke testing:** At the end of each milestone (after all feature specs are green), a short local app review (10–15 min for the entire integrated feature set) must be completed before milestone sign-off.
+- **Verify and smoke-test gates are one activity:** The milestone's final verification step (e.g., SYNC-09) includes the smoke test; no additional separate smoke tests at internal spec sub-step acceptances.
+- Any UX gaps or quality issues discovered during the milestone smoke test are recorded in the milestone closure decision and spec acceptance logs as post-acceptance improvements or rescoping feedback (not blockers, but visible in decisions).
+- Team staffing decision for Milestone 4 and 5 UI/UX work is now informed by hands-on local inspection of the integrated milestone features, not estimates.
+
+### Related Constraints
+
+- Smoke testing is **not** a separate QA phase or test-case library; it is a gate review activity.
+- Mobile accessibility and offline clarity are mandatory validation points (per constitution).
+- Findings feed into the team's UI/UX skill-gap assessment for Milestone 4 onward.
+
+
+
+## Separation of Duties & UI/UX Governance (2026-03-09)
+
+### Status: Implementation Complete
+
+**Issue:** Ashley Hollis requested evaluation of separation of duties, specifically questioning whether testing/review should be separate from implementation, and whether UI/UX review belongs to the frontend developer.
+
+**Assessment & Findings:**
+- **Implementation + Testing:** Already separated in practice (McCoy independently verifies; Kirk accepts after verification). Wave 1 rejections (Feb history) and recent milestone closures (M1, M2, M3) show honest separation is working. Routing documentation just didn't make this explicit.
+- **UI/UX Review:** No dedicated specialist exists. Uhura (frontend dev) implements UI decisions without separate design/accessibility review. McCoy's smoke testing (M3 closeout) validates functional completeness but not deep WCAG compliance, design-system consistency, or pre-implementation design critique.
+- **Milestone 4 Mobile Risk:** Trip mode and conflict review UX are critical field-use features; weak mobile design now cascades into production issues.
+
+**Decision: Tighten Existing Roles + Add Spec Gates (No Roster Change)**
+
+1. **Explicit Separation of Verification Ownership (routing.md updated):**
+   - McCoy owns **functional test completion and edge cases** (implementation verification)
+   - Kirk owns **design/accessibility/visual review** (WCAG, responsive, contrast) at final acceptance gate
+   - Uhura remains **implementation owner and primary UX contributor**
+
+2. **Spec-First UI/UX Requirements (team.md + spec discipline):**
+   - Every UI-bearing feature spec must include:
+     - WCAG 2.1 AA accessibility target (or explicit constraint with rationale)
+     - Mobile-first breakpoints and responsive layout acceptance criteria
+     - Keyboard navigation and color contrast requirements
+   - Spec leads spec-first discipline; Uhura implements to spec; Kirk verifies against checklist at acceptance.
+
+3. **Kirk's Design Acceptance Checklist (for final milestone review):**
+   - Responsive visual pass (desktop/tablet/mobile)
+   - Keyboard navigation fully functional (no mouse-only interactions)
+   - WCAG color contrast verified (axe DevTools or manual check)
+   - Mobile-first implementation confirmed (not desktop-first retrofit)
+
+4. **McCoy's Smoke-Testing Scope (for Milestone 4+):**
+   - Focus on functional/state correctness (data flows, mutations, transitions)
+   - Document visual anomalies as **separate** visual blockers for Kirk, not functional gatekeepers
+
+**Why This Approach:**
+- **No disruption to current momentum:** Uhura has demonstrated solid mobile-responsive implementation across Milestones 1–3. Current team is capable.
+- **Governance tightens separation:** Routing now explicitly names each reviewer's scope. Spec discipline surfaces accessibility/design requirements early. Kirk's checklist makes design review accountable and verifiable.
+- **Preserves MVP timeline:** Adding a dedicated specialist would delay Milestone 4 execution. Spec gates + Kirk's acceptance checklist provide design/accessibility discipline without new headcount.
+
+**Post-Milestone 4 Escalation Point:**
+If Milestone 4 mobile work reveals:
+- Systematic WCAG gaps despite spec gates, OR
+- Uhura's implementation quality degrades under mobile/offline complexity, OR
+- Design consistency issues cascade across features,
+
+Then escalate recommendation for dedicated UI/UX specialist or external design contractor for Phase 2.
+
+**Documents Updated:**
+- .squad/routing.md — clarified design/accessibility review ownership
+- .squad/team.md — added spec requirements for UI-bearing features
+- .squad/decisions/inbox/kirk-separation-of-duties.md — full assessment and rationale
+
+

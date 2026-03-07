@@ -8,6 +8,7 @@
 - **Team casting:** Star Trek TOS first.
 
 ## Learnings
+- Manual visual smoke testing is a milestone-end completion gate, not a per-sub-step ritual: run it once in the milestone's final user-journey verification step, then have final acceptance consume that recorded evidence instead of rerunning it by default.
 - Ashley's directive (2026-03-07) locks Auth0 integration to the backend API only. The Next.js frontend on Azure Static Web Apps must never install the Auth0 Next.js SDK — it breaks SWA startup. This is now an explicit architectural constraint across all planning docs.
 - The frontend authentication path is: call API session bootstrap endpoints (e.g. `GET /api/v1/me`); the API handles OIDC, JWT validation, and session state. No Auth0 SDK, no Auth0 env vars in the web deployment unit.
 - All affected planning docs were updated in a single Spec pass: architecture overview, frontend-offline-sync, api-worker-architecture, deployment-environments, testing-quality, and roadmap. Decision recorded at `.squad/decisions/inbox/spec-backend-auth0-api-only.md`.

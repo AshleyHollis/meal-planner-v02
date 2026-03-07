@@ -14,6 +14,8 @@
 - The relevant backend/API validation suite for the current inventory/session slice is `python -m pytest tests\test_inventory.py tests\test_session.py tests\test_health.py` from `apps\api`.
 - INF-02 introduced `households` + `household_memberships` as the tenancy root for inventory persistence, and the SQLite model harness now enables foreign-key enforcement so invalid cross-table references fail in tests instead of hiding until production.
 - Deterministic dual-household seed fixtures should reuse the same client mutation ID across households to prove idempotency scope without relying on random UUID collisions.
+- Milestone 4 trip/offline work needs an explicit `trip_state` seam in addition to grocery lifecycle status; using grocery status labels alone makes it too easy to mistake “confirmed snapshot ready for trip bootstrap” for a fully delivered trip workflow.
+- The sync/conflict seam is easier for downstream teams to implement when every queued mutation and conflict record carries an explicit aggregate reference (`aggregate_type`, `aggregate_id`, version) instead of making UI/API code infer target identity from ad hoc payload fields.
 
 ## Wave 1 — Data Model Foundation (2026-03-07)
 
@@ -73,3 +75,41 @@ Implemented the full persistent model and schema contract layer for all approved
 ### Learnings
 - Planner slot provenance needs a stable slot key separate from row IDs; using a canonical `<day_of_week>:<meal_type>` seam keeps AI suggestion slots, draft slots, confirmation history, and per-slot regeneration aligned.
 - AI request idempotency must stay household-scoped just like inventory mutations; planner request keys that are globally unique would create the same cross-household replay hazard already eliminated in inventory work.
+
+## AIPLAN-04 — Worker-backed AI Generation (2026-03-08)
+
+### What was built
+- Added a shared worker runtime under `apps/worker/worker_runtime/` that now owns authoritative planner grounding, prompt bundle assembly, structured output validation, equivalent-result reuse, deterministic curated fallback, and manual-guidance fallback for the Milestone 2 planner contract.
+- Rewired `PlannerService.complete_request()` to execute through the worker runtime so Scotty’s request lifecycle endpoints now poll real request/result state rather than API-local placeholder materializers.
+- Promoted fallback provenance from a boolean to a string contract (`none`, `curated_fallback`, `manual_guidance`) across AI results, draft slots, and confirmation history, and added `rev_20260308_02_aiplan04_fallback_modes.py` so the database seam is reversible.
+- Added deterministic worker tests for grounding/version persistence, fresh-result reuse by grounding hash, curated fallback on invalid provider output, and manual-guidance slot regeneration that preserves the user’s prior slot selection.
+
+### Validation
+- `cd apps\api && python -m pytest tests` passed (134 tests).
+- `cd apps\api && python -m compileall app tests migrations` passed.
+- `cd apps\worker && python -m pytest tests` passed (5 tests).
+- `cd apps\worker && python -m compileall app worker_runtime tests` passed.
+
+### Learnings
+- The grounding hash cannot include request-specific identifiers such as `request_id`; if it does, tier-1 equivalent-result reuse silently never triggers even when the household context is identical.
+- Regen failure handling needs a stricter rule than weekly fallback handling: weekly requests can surface manual-guidance placeholder slots, but single-slot regeneration must preserve the user’s last viable slot content and only mark the regen attempt as failed/manual.
+
+## GROC-01 — Grocery Schema and Migration Seams (2026-03-08)
+
+### What was built
+- Tightened the grocery ORM slice so grocery lists are now household-backed, carry explicit confirmation mutation IDs, enforce Milestone 3 lifecycle states, and expose current-version helpers for last-derived metadata and incomplete-slot warning payloads.
+- Updated grocery versions and lines to preserve contract-aligned traceability: confirmed-plan version, inventory snapshot reference, incomplete-slot warning payloads, offset inventory version references, active/removed line state, and mutation-attribution fields for add/remove actions.
+- Added `GroceryMutationReceipt` as the household-scoped idempotency seam for future grocery mutations, mirroring the inventory trust pattern without pulling the full grocery service/router work forward.
+- Added reversible migration coverage plus updated model/schema tests to lock the new contract down before Scotty layers derivation, refresh, and API endpoints on top.
+
+### Validation
+- `cd apps\api && python -m pytest tests` passed (151 tests).
+- `cd apps\api && python -m compileall app tests migrations` passed.
+- `npm run lint:web` passed.
+- `npm run typecheck:web` passed.
+- `npm run build:web` passed.
+- `npm run test:worker` passed (9 tests).
+
+### Learnings
+- Grocery idempotency needs the same household-scoped receipt seam as inventory mutations; storing only per-line mutation IDs would not be enough to make confirm/add/remove retries replay-safe across the whole grocery slice.
+- Incomplete-slot warnings belong on the derived list version, not on individual grocery lines, because the warning describes what the derivation run could not produce rather than a property of any successful line.

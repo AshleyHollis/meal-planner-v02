@@ -10,6 +10,8 @@
 ## Learnings
 - Team initialized on 2026-03-07 for Ashley Hollis.
 - Current focus is spec-first setup for the AI-assisted household meal planning platform.
+- **Manual visual smoke testing is mandatory at milestone completions** (2026-03-09): Each milestone closure must include local app review and UI/UX validation before acceptance. The smoke test is a gate review at milestone end, built into the final verify step—not repeated at every internal spec sub-step.
+- **Milestone 4 local review**: Current session is evaluating local Aspire app UI/UX posture and planning any UI/UX specialist skill gaps or staffing needs.
 
 ## Team Updates (2026-03-07)
 
@@ -438,3 +440,250 @@
 
 **Zero blocking issues.**
 
+---
+
+## Milestone 4 Kickoff and SYNC-01 Handoff (2026-03-09T02-00-00Z)
+
+**Status:** 🚀 EXECUTION ACTIVE
+
+**Milestone 4 activation confirmed (2026-03-09T01-00-00Z):**
+- Kirk completed GROC-11 final acceptance review; all 11 GROC tasks approved against chartered scope
+- Scope boundaries clean: no trip-execution, offline-store, or reconciliation code in Milestone 3
+- Confirmed-list seam stable and ready for downstream trip/reconciliation workflows
+- Full app verified: 171 API + 33 web + 9 worker tests passing, build/lint/typecheck green, E2E Playwright acceptance tests green
+
+**Milestone 4 execution-ready planning delivered:**
+- Approved spec: `.squad/specs/offline-sync-conflicts/feature-spec.md`
+- Execution-ready task queue: `.squad/specs/offline-sync-conflicts/tasks.md` (12 implementation tasks + 3 blocked follow-ons)
+- Progress ledger: `.squad/specs/offline-sync-conflicts/progress.md` (live tracking from SYNC-00 through SYNC-11)
+- Locked implementation rules: confirmed-list bootstrap only, intent queue only, server-classified conflicts, unsafe replay stops, MVP auto-merge narrow, mobile-first UX mandatory, no silent inventory mutation, backend-owned session/auth only
+
+**SYNC-01 handoff to Sulu (2026-03-09T02-00-00Z):**
+- **Task:** Lock the trip/offline contract seam across API and web types
+- **Owner:** Sulu
+- **Status:** ready_now (assigned 2026-03-09T02-00-00Z)
+- **Scope:** Finalize confirmed-list bootstrap payload contract, queueable mutation metadata (`client_mutation_id`, `base_server_version`, aggregate identity), sync outcome enums, conflict record schema, explicit resolution commands, remove placeholder trip semantics
+- **Planned completion:** 2026-03-09T06-00-00Z
+- **Dependent tasks unblocked after SYNC-01:** SYNC-02 (offline store, Uhura), SYNC-03 (trip UX, Uhura), SYNC-04 (upload API, Scotty), SYNC-05 (conflict classifier, Scotty)
+
+**Decision consolidation:**
+- Kirk GROC-11 milestone review decision moved from `.squad/decisions/inbox/` to `.squad/decisions/consolidated/2026-03-09T01-00-00Z-kirk-groc11-milestone-acceptance.md`
+- Inbox status: 0 items
+
+**Session artifacts created:**
+- Session log: `.squad/log/2026-03-09T02-00-00Z-milestone4-kickoff-sync01-handoff.md`
+- Orchestration log: `.squad/orchestration-log/2026-03-09T02-00-00Z-milestone4-kickoff-sync01-handoff.md`
+- Progress ledger: Active and tracking SYNC-00 (Scribe) in_progress and SYNC-01 (Sulu) ready_now
+
+## Milestone 4 Full Execution Resumed (2026-03-09T05-00-00Z)
+
+**Milestone 3 full completion & Milestone 4 build direction:**
+- Milestone 3 ✅ complete and fully approved (Kirk signed off GROC-11 on 2026-03-09T01-00-00Z)
+- Confirmed grocery-list seam stable (`grocery_list_version_id`, `grocery_line_id`, `confirmed_at`) and trustworthy for Milestone 4 downstream consumption
+- **Milestone 4 execution now ACTIVE:** SYNC-02 (Uhura, durable client offline store and queue foundation) and SYNC-04 (Scotty, sync upload API and stale-detection foundations) now in flight as of 2026-03-09T05-00-00Z
+- SYNC-01 (Sulu) ✅ complete: contract seam locked on 2026-03-09T02-00-00Z; all Milestone 4 contract seams finalized across API and web types
+
+**Local development environment verified:**
+- Aspire orchestration running: 4 dotnet processes (API, dependencies), 5 node processes (Next.js dev), 10 Python processes (FastAPI, worker)
+- All services responsive: web on localhost, API health endpoints responding, worker active and subscribed
+- Build/test tools operational: npm build, typecheck, lint all available; pytest ready for API and worker test coverage
+- SQLite database accessible with Milestone 3 schema intact; Azurite blob storage mock available
+- Manual accessibility checks passed: desktop and mobile viewports responsive; no horizontal overflow; trip/conflict state enums present in API/web contracts
+
+**Progress ledger updated:**
+- `.squad/specs/offline-sync-conflicts/progress.md` now tracking SYNC-02 and SYNC-04 as in_progress
+- `.squad/identity/now.md` updated: Milestone 4 execution status and local-dev environment confirmed active
+- Session plan updated: active build focus, development environment running, SYNC-02/SYNC-04 in flight
+
+**Execution watchpoints for active work:**
+- SYNC-02 (offline store): IndexedDB schema must align with SYNC-01 finalized `QueueableSyncMutation` contract; queue lifecycle state machine to be tested with deterministic offline fixtures
+- SYNC-04 (upload API): idempotent mutation receipt must reuse Milestone 1/3 household-scoped patterns; stale-detection boundary conservative (quantity/deletion/freshness conflicts require review per matrix)
+- Cross-task coordination: SYNC-02 and SYNC-04 run in parallel, both depending on SYNC-01 (already locked); each testable independently before downstream SYNC-05/SYNC-06/SYNC-07 work begins
+- Downstream sequential: SYNC-03 (mobile trip UX), SYNC-05 (conflict classifier), SYNC-06 (resolution commands), SYNC-07 (conflict-review UX), SYNC-08 (observability) all ready to queue after respective dependencies complete
+- Verification gates pending: SYNC-09 (McCoy backend verification), SYNC-10 (McCoy mobile E2E + mandatory visual smoke test), SYNC-11 (Kirk final acceptance)
+
+**Session artifacts created:**
+- Session log: `.squad/log/2026-03-09T05-00-00Z-milestone4-execution-resumed.md` (new file documenting SYNC-02/SYNC-04 launch and dev environment status)
+
+**Ready-now queue post-activation:**
+| Task | Scope | Owner | Status | Next |
+| --- | --- | --- | --- | --- |
+| SYNC-00 | Keep progress ledger current | Scribe | in_progress | Ongoing throughout Milestone 4 |
+| SYNC-01 | Lock contract seam | Sulu | ready_now | Execute immediately; unblocks SYNC-02/03/04 |
+
+**Full app verification at Milestone 4 kickoff:**
+- ✅ API tests: 171 passed
+- ✅ Web tests: 33 passed
+- ✅ Worker tests: 9 passed
+- ✅ Web build: Complete
+- ✅ Web lint: Clean
+- ✅ Web typecheck: Clean
+- ✅ E2E acceptance tests: Green
+- ✅ No blockers for Milestone 4 execution
+
+**Watchpoints for Milestone 4 execution:**
+- Trip mode scope boundaries: no reconciliation, no advanced inventory mutations, confirmed list version/line IDs immutable
+- Sync and conflict scope: deterministic replay logic, user-visible conflict UX with clear choice points, deduplication prevents double-application
+- Mobile-first validation: phone-sized touch screens, offline-first behavior mandatory, sync resume must replay intents in deterministic order
+
+**Constitution alignment verified:**
+- 2.1 Mobile Shopping First: trip mode operates on phone-sized touch targets
+- 2.2 Offline Is Required: app works through connectivity loss
+- 2.3 Shared Household Coordination: safe conflict resolution enables shared state
+- 2.7 UX Quality and Reliability: mobile trip is first-class feature, not fallback
+
+**Ashley Hollis directive in force:** "Team, please build the full app and don't stop until it's complete and verified."
+
+**Zero blocking issues. Milestone 4 execution-ready and under way.**
+
+
+
+---
+
+## Milestone 4 Session: Local App Review & UI/UX Staffing Assessment (2026-03-09)
+
+**New Governance Checkpoint:**
+- **Manual Visual Smoke Testing is Now Mandatory:** All spec completions must include local Aspire app review and UI/UX validation before acceptance.
+- **Expectation:** Each milestone completion gate (e.g., before GROC-10, GROC-11, SYNC-09, etc.) must include hands-on review of the running local app, confirming the implementation matches the spec intent and the UX is sound.
+- **Implementation:** Smoke testing is recorded in spec acceptance gates and decision logs, not in separate test reports.
+
+**Current Session Focus (Ashley Hollis, 2026-03-09):**
+- **Task:** Review local Aspire app UI/UX status and evaluate team skill posture.
+- **Scope:** 
+  - Start local app (Aspire orchestration)
+  - Visually inspect Milestone 1, 2, 3 feature completeness and UX quality
+  - Identify gaps or UX concerns in mobile, desktop, and accessibility
+  - Assess whether team has in-house UI/UX expertise or needs specialist staffing/skills
+- **Decision Point:** Based on local review, determine UI/UX staffing strategy for Milestone 4 (trip mode, conflict review, mobile-first) and Milestone 5 (reconciliation).
+- **Expected Outcome:** Session plan updated with UI/UX staffing decision and any Milestone 4 scope adjustments.
+
+**Rationale:**
+- Milestones 1–3 are backend/data-heavy; Milestone 4 is mobile trip mode with explicit conflict-review UX (a constitutional priority).
+- Constitution 2.1 (Mobile Shopping First) and 2.3 (Shared Household Coordination) require high-quality UX for conflict resolution; code-only review is insufficient.
+- Manual smoke testing catches UX issues that automated tests miss: touch targets, gesture clarity, offline feedback, conflict presentation, etc.
+- Team staffing gaps (especially mobile UX expertise) must be visible now to unblock Milestone 4 planning.
+
+**Related Decisions in Force:**
+- GROC-08/GROC-09 (confirmed grocery-list seam) completed; Milestone 3 fully approved with visual handoff seams confirmed.
+- SYNC-01 (contract seam lock) now ready for Sulu to execute.
+- No reconciliation work in Milestone 4; trip mode is read-mostly with conflict-safe mutation-replay only.
+- Milestone 4 execution-ready pending UI/UX staffing clarity.
+
+---
+
+## Decision Clarification: Manual Visual Smoke Testing Timing (2026-03-09 — Scribe Update)
+
+**Clarification:** The mandatory manual visual smoke testing decision is now explicitly scoped to **milestone completions**, not every sub-step verify/acceptance within a milestone.
+
+**Refined Rule:**
+- Manual visual smoke testing is **required at the end of each milestone** (e.g., end of Milestone 4 before SYNC-09 closure) to confirm the entire feature set runs correctly in the local app.
+- The milestone's final **verify/acceptance step** (e.g., SYNC-09) includes and triggers the smoke test; no separate smoke test at each internal spec acceptance sub-step (e.g., not at SYNC-03, SYNC-05, SYNC-07 individually).
+- The smoke test is a **gate review** at milestone close, not a repetitive quality check at every acceptance boundary.
+
+**Reason:**
+- Clarifies that the verify step (already planned at milestone end) and smoke testing are **one gate**, not two separate reviews.
+- Reduces overhead while preserving the constitutional requirement for hands-on UX validation before milestone closure.
+- Ensures manual UX review happens at the milestone scale where all features are integrated and usable together.
+
+**Decision Impact:**
+- `.squad/decisions.md` updated: Decision "Mandatory Manual Visual Smoke Testing for Spec Completion" now explicitly reads "milestone completions" not "all spec completions."
+- Milestone 4 execution and beyond: Smoke testing gate is built into the final milestone closure (SYNC-09, etc.), not repeated at intermediate sub-steps.
+
+---
+
+## Seed Data Strategy Review Initiated (2026-03-09)
+
+**Session Date:** 2026-03-09  
+**Initiated by:** Ashley Hollis  
+**Context:** Milestone 4 execution active (SYNC-02, SYNC-04 in flight); local dev environment stable and running.
+
+**Question:** Should the team seed test data into local and preview/test environments?
+
+**Rationale for Review:**
+- Mandatory visual smoke testing (milestone-end gate) requires realistic data to validate UX flows.
+- Milestone 4 mobile trip mode and conflict review need substantive test scenarios.
+- Current team practice: manual local testing and deterministic API/worker test fixtures.
+- Decision will inform whether to invest in seed-data infrastructure for Milestone 4 onward.
+
+**Scope:** Local dev environment, preview/CI builds, data scale, maintenance strategy.
+
+**Status:** Under review; decision pending team input (Sulu, Uhura, Scotty, McCoy).
+
+**Artifact:** .squad/decisions/inbox/ashley-seed-data-strategy.md
+
+---
+
+## Milestone 4 Execution Continued: SYNC-03 and SYNC-05 Complete, SYNC-06 Activated (2026-03-09T07-00-00Z)
+
+**Status:** 🚀 EXECUTION CONTINUING
+
+**Local development environment repaired (2026-03-09T06-00-00Z):**
+- Build cache corruption resolved; all cache artifacts regenerated
+- Web typecheck, lint, and build all passing green
+- API tests passing (171/171 with known non-blocking warning noise)
+- Worker tests passing (9/9)
+- Web service responsive on localhost
+- API and worker services responsive and healthy
+- All development tools operational for continuous integration and testing
+
+**SYNC-03 completion (Uhura, Mobile trip mode implementation — 2026-03-09):**
+- **Task:** Implement mobile trip mode over the confirmed-list snapshot
+- **Status:** ✅ COMPLETE
+- **Scope Delivered:** GroceryView now offers phone-first trip actions over the confirmed snapshot with durable offline queueing, reconnect sync upload, and visible local sync state. Trip mode displays confirmed grocery list, enables quick quantity adjustments, mark-done check-offs, ad hoc trip item additions, reconnect sync upload trigger, and clear offline state indicators.
+- **Contract Integration:** Builds on SYNC-01 contract seam and SYNC-02 offline store durability foundation. Uses confirmed snapshot (grocery_list_version_id, grocery_line_id, confirmed_at) as source of truth.
+- **Verification:** Frontend regression tests cover trip state initialization, quantity change intent queueing, mark-done check-off intent queueing, ad hoc item addition, reconnect sync upload triggering, and offline state display.
+- **No conflict-resolution work claimed:** UX now provides visible sync state and replay queuing but explicitly stops at conflict classification; SYNC-05 and downstream tasks handle resolution logic.
+
+**SYNC-05 completion (Scotty, MVP conflict classifier and replay rules — 2026-03-09):**
+- **Task:** Implement the MVP conflict classifier and replay rules
+- **Status:** ✅ COMPLETE
+- **Scope Delivered:** Duplicate retry detection (client_mutation_id deduplication), narrow safe auto-merge classes (same quantity → no conflict, same location → no conflict, same freshness → no conflict), explicit review-required classification (quantity conflicts, deletion conflicts, freshness conflicts per conflict matrix), and deterministic same-list replay stop (prevents infinite loops).
+- **Backend Contract:** Conflict classifier integrated into sync upload path; conflict records persisted in SQL with outcome class; stale-detection and replay foundations operational.
+- **Conflict Matrix Alignment:** All approved matrix rules (duplicate, safe-merge, review-required, stop-replay conditions) implemented and tested.
+- **Verification:** Backend regression tests cover duplicate retry handling, auto-merge conditions, conflict classification, and replay stop detection. All tests passing.
+- **Ready for downstream:** SYNC-06 (explicit resolution commands) depends on SYNC-05 classifier being live; SYNC-07 (conflict-review UX) depends on both.
+
+**SYNC-06 activation (Scotty, Explicit resolution commands and read-model refresh — ready_now):**
+- **Task:** Implement explicit resolution commands and read-model refresh
+- **Status:** 🚀 READY TO BEGIN
+- **Scope:** Keep-mine/use-server resolution commands must stay explicit and auditable. Mutation-receipt refresh must reflect final applied state after resolution. Household-scoped idempotency preserved.
+- **Owner:** Scotty
+- **Dependencies:** SYNC-05 (conflict classifier) ✅ complete; SYNC-01 (contract seam) ✅ complete
+- **Blocking:** SYNC-07 (conflict-review UX) and SYNC-08 (observability) depend on SYNC-06 completion
+- **Planned completion:** Sequential after SYNC-05 completion gate
+
+**Progress ledger updated:**
+- `.squad/specs/offline-sync-conflicts/progress.md` now shows SYNC-03 ✅ done, SYNC-05 ✅ done, SYNC-06 pending (ready_now)
+- `.squad/identity/now.md` updated: Milestone 4 execution status, local dev environment restored, SYNC-03/SYNC-05 complete, SYNC-06 activated
+- Session plan updated: active build continuing, focus shifts to resolution commands and conflict-review UX preparation
+
+**Ready-now queue post-update:**
+| Task | Scope | Owner | Status | Next |
+| --- | --- | --- | --- | --- |
+| SYNC-00 | Keep progress ledger current | Scribe | in_progress | Ongoing |
+| SYNC-01 | Lock contract seam | Sulu | ✅ done | N/A |
+| SYNC-02 | Build offline store foundation | Uhura | ✅ done | N/A |
+| SYNC-03 | Implement mobile trip mode | Uhura | ✅ done | N/A |
+| SYNC-04 | Add sync upload API | Scotty | ✅ done | N/A |
+| SYNC-05 | Implement conflict classifier | Scotty | ✅ done | N/A |
+| SYNC-06 | Resolution commands + refresh | Scotty | ready_now | Execute immediately; unblocks SYNC-07/08 |
+
+**Execution watchpoints:**
+- Conflict-review UX still outstanding (SYNC-07, Uhura): Mobile surfaces for keep-mine/use-server choices not yet wired to SYNC-06 resolution commands
+- Observability infrastructure still pending (SYNC-08, Scotty): Trace coverage for end-to-end conflict flows and deterministic sync fixtures needed before verification gates
+- Verification gates ready to queue (SYNC-09/10/11) once implementation tasks (SYNC-06/07/08) complete
+
+**Full app status:**
+- ✅ API tests: 171 passing
+- ✅ Web tests: 33 passing
+- ✅ Worker tests: 9 passing
+- ✅ Web build: Complete and clean
+- ✅ Web lint: Clean
+- ✅ Web typecheck: Clean
+- ✅ Local Aspire environment: Stable and responsive
+- ✅ Database: SQLite with Milestone 3/4 schema intact
+- ✅ No blocking issues for continued Milestone 4 execution
+
+**Ashley Hollis directive in force:** "Please continue building all of the app." Milestone 4 execution continuing with no scope blockers.
+
+**Zero blocking issues. Milestone 4 execution-ready and advancing.**

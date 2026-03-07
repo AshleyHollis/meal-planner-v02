@@ -23,5 +23,7 @@
 
 ## Working Agreements
 - Spec-first workflow is required for non-trivial feature work.
+- UI-bearing feature specs must include WCAG 2.1 AA target, mobile-first breakpoints, responsive layout acceptance criteria, and keyboard navigation requirements.
+- Design/accessibility review is owned by Kirk at final acceptance gate; McCoy owns functional/interaction verification.
 - Team state lives in `.squad/` in this worktree.
 - Append-only memory files use union merge handling.

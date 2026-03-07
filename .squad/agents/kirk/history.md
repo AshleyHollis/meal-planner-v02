@@ -47,6 +47,19 @@
 - Running the evidence suite independently before signing off continues to prove essential — progress ledger claims alone are never sufficient for a milestone gate.
 - Milestone completion means downstream milestones (Meal Planning, Grocery/Trip, Reconciliation) can safely build on this foundation without placeholder dependencies.
 
+## Separation of Duties & UI/UX Governance Review (2026-03-09)
+
+- **Assessment:** Ashley Hollis requested evaluation of separation of duties (testing/review vs. implementation) and whether UI/UX review should be separate from frontend development.
+- **Finding:** Implementation + testing separation **already works** in practice (McCoy independently rejects; Kirk accepts after verification). Practice just wasn't explicit in routing.
+- **Gap:** No dedicated UI/UX specialist; Uhura implements without separate design/accessibility review. Milestone 4 mobile work requires tightened governance.
+- **Decision: Tighten existing roles + add spec gates. No roster change.**
+  1. Routing updated to explicitly separate McCoy (functional verification) from Kirk (design/accessibility acceptance).
+  2. UI-bearing specs now must include WCAG 2.1 AA target, mobile-first breakpoints, responsive/keyboard-nav acceptance criteria.
+  3. Kirk's acceptance checklist now includes design/accessibility gate (responsive pass, keyboard nav, WCAG contrast, mobile-first priority).
+  4. Uhura remains implementation owner and primary UX contributor; McCoy owns functional testing (not design judgment).
+- **Post-Milestone 4 escalation point:** If systematic WCAG gaps or quality degradation appear, escalate recommendation for dedicated UI/UX specialist for Phase 2. For now, spec discipline + Kirk's acceptance gate provide sufficient governance.
+- **Documents updated:** routing.md, team.md, decisions.md (appended full decision), kirk-separation-of-duties.md (decision record created).
+
 ## Local Startup + Auth + Git Triage (2026-03-08)
 
 - **Root cause of Aspire load failure:** `AppHost.cs` registers zero resources — the Aspire dashboard starts but has nothing to orchestrate. This is Milestone 0 foundation work that was scaffolded but never completed.
@@ -70,3 +83,13 @@
 - Decision recorded at `.squad/decisions/inbox/kirk-aiplan-12-milestone-review.md`.
 - Running the evidence suite independently before signing off continues to prove essential — progress ledger claims alone are never sufficient for a milestone gate. The previously noted build failure being resolved by milestone-end validated that workspace-level issues should not block slice reviews but must clear before final acceptance.
 - Milestone 2 completion means downstream milestones (Grocery Derivation M3, Offline Sync M4) can safely build on the confirmed-plan handoff contract without placeholder dependencies.
+
+## GROC-11 Milestone 3 Final Acceptance (2026-03-08)
+
+- **Milestone 3 APPROVED.** All 20 feature-spec acceptance criteria independently verified against implementation code. Full evidence suite run independently: 171 API tests, 35 web unit tests, 3 Playwright acceptance tests, 9 worker tests, lint/typecheck/build all green (218 total deterministic tests).
+- Verified criteria include: confirmed-plan-only derivation, conservative same-item same-unit offset matching, full/partial/no inventory offset, duplicate consolidation with meal traceability, staple items not assumed on hand, ad hoc item coexistence and refresh survival, user override preservation with visible flagging, automatic refresh on plan/inventory changes, confirmed-list immutability, idempotent mutations with client_mutation_id receipts, stale-draft visible indication, and stable version/line identity seams for downstream trip/reconciliation.
+- Scope boundary verification confirmed: no trip execution code (trip statuses are guard clauses only), no offline store/IndexedDB/service worker, no Auth0 SDK, no reconciliation logic absorbed. Milestones 4/5 work (GROC-12/13/14) remains explicitly tracked as blocked.
+- Eight explicit follow-ups documented as non-silent carryover: GROC-12 offline store (M4), GROC-13 trip flows (M4), GROC-14 reconciliation (M5), Auth0 production wiring (inherited), datetime.utcnow() deprecation (inherited), dual lockfile warning (inherited), npm run test:api wrapper hang (env-specific), and temporary ingredient catalog seam (future slice).
+- Decision recorded at `.squad/decisions/inbox/kirk-groc-11-milestone-review.md`.
+- Running the evidence suite independently before signing off continues to prove essential — this is now the third consecutive milestone where progress ledger claims alone would have been insufficient for a gate decision.
+- Milestone 3 completion means Milestone 4 (Trip Execution + Offline Sync) and Milestone 5 (Shopping Reconciliation) can safely build on the confirmed-list handoff contract without placeholder dependencies.
