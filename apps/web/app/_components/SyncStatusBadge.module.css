@@ -1,0 +1,28 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.syncing {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.conflict {
+  background: #fff7ed;
+  color: #f97316;
+}
+
+.error {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.offline {
+  background: #f9fafb;
+  color: #6b7280;
+}

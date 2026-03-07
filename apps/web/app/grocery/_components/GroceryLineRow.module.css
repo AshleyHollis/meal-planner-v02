@@ -1,0 +1,107 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 0.75rem;
+  transition: opacity 0.15s;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.checked {
+  opacity: 0.45;
+}
+
+.checked .name {
+  text-decoration: line-through;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.textColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.95rem;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trace,
+.flagged {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.flagged {
+  color: #b45309;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.qty {
+  color: #374151;
+  font-weight: 500;
+}
+
+.source {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.adHoc {
+  font-size: 0.72rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.covered {
+  font-size: 0.72rem;
+  color: #15803d;
+  background: #f0fdf4;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.offset {
+  font-size: 0.72rem;
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}

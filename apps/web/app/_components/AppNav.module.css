@@ -1,0 +1,91 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 1.5rem;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 2rem;
+  text-decoration: none;
+}
+
+.brandIcon {
+  font-size: 1.4rem;
+}
+
+.brandName {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.navList {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  height: 40px;
+}
+
+.navLink:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.navLink.active {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.navIcon {
+  font-size: 1rem;
+}
+
+.userArea {
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+.userLoading {
+  color: #9ca3af;
+}
+
+.userName {
+  color: #374151;
+  font-weight: 500;
+}
+
+.userGuest {
+  color: #9ca3af;
+}
+
+.userError {
+  color: #dc2626;
+}

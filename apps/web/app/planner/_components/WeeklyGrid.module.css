@@ -1,0 +1,41 @@
+.grid {
+  display: grid;
+  grid-template-columns: 90px repeat(7, 1fr);
+  gap: 0.5rem;
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.cornerCell {
+  /* spacer */
+}
+
+.dayHeader {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  color: #6b7280;
+  padding: 0.3rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mealLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.75rem;
+}
+
+.cell {
+  min-height: 110px;
+}
+
+.emptyCell {
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  min-height: 100px;
+}

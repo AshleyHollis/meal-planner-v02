@@ -1,0 +1,132 @@
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 100px;
+  transition: border-color 0.15s;
+}
+
+.card:hover {
+  border-color: #c7d2fe;
+}
+
+.regenerating {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.mealType {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #6b7280;
+}
+
+.originBadge {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+.ai_suggested {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.user_edited {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.manually_added {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.mealTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.mealSummary {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.regenLabel {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.emptySlot {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #d1d5db;
+  font-style: italic;
+}
+
+.explanation {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.explanation summary {
+  cursor: pointer;
+  color: #4f46e5;
+  font-size: 0.78rem;
+}
+
+.explanation p {
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
+
+.slotMessage {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+.slotError {
+  color: #b91c1c;
+}
+
+.actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
+.actionBtn {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  color: #6b7280;
+  transition: background 0.15s, color 0.15s;
+}
+
+.actionBtn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
