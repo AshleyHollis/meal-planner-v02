@@ -1619,3 +1619,125 @@ Added regression coverage for regen pending→complete provenance, stale-confirm
 - **McCoy (GROC-05):** Verify against the new contract names: `confirmed_plan_version`, `required_quantity`, `offset_quantity`, `shopping_quantity`, `active`, and version-level `incomplete_slot_warnings`.
 
 **Milestone 3 Impact:** Schema and models are locked; GROC-02 (derivation engine) and GROC-04 (API router) can now proceed with confidence on a trustworthy foundation.
+
+---
+
+## McCoy — GROC-05 Backend Derivation Verification (2026-03-08)
+
+**Verdict:** ✅ APPROVED
+
+**What verified:**
+- Confirmed-plan-only derivation against coexisting draft state
+- Staples non-assumption: remain on list unless inventory clearly offsets
+- Conservative full/partial/no offset behavior
+- Duplicate consolidation and unit separation
+- Stale-draft signaling after inventory drift
+- Override + ad hoc preservation across refresh/re-derive
+- Household-scoped idempotent mutations
+- Confirmed-list stability under refresh/re-derive pressure
+
+**Evidence:**
+- pps\api: 	est_grocery.py 13/13 passed
+- Full suite: 166 tests passed, 196 warnings (repo baseline datetime.utcnow() noise)
+
+**Reviewer conclusion:** Backend derivation and contract slice has explicit automated proof for trust-sensitive gaps. No rejection or reviewer lockout required.
+
+---
+
+## Uhura — GROC-07 Grocery Review UX Decision (2026-03-08)
+
+**Decision:** Inline review surface with per-line detail disclosure, quantity override editing, removed-lines tracking, and confirmation modal.
+
+**Why:**
+- Desktop/phone scanability without hiding traceability behind secondary pages
+- Removed-lines section keeps draft honest about intentional dismissals
+- Confirmation modal as explicit authority boundary for list locking
+
+**Interaction model:**
+- Inline per-line detail disclosure for meal traceability and offset breakdown
+- Quantity override editing and removal review while draft
+- Separate removed-lines section for change visibility
+- Confirmation modal instead of silent confirm (restates warnings, overrides, list-lock consequence)
+
+**Consequences:** Current grocery slice uses inline disclosure + modal confirmation. GROC-10 E2E verification should treat this as expected review flow on desktop and phone layouts.
+
+
+---
+
+## Decision: Scotty — GROC-08 / GROC-09 Hardening (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Scotty (Backend)  
+**Status:** ✅ APPROVED  
+**Scope:** Grocery derivation handoff seam hardening
+
+### Decision
+
+Treat the grocery list version, not the mutable grocery list row alone, as the downstream trip/reconciliation snapshot seam, and expose it explicitly in the read model as grocery_list_version_id. Expose stable per-line identifiers separately as grocery_line_id, backed by a persisted stable_line_id that survives logical carry-forward across re-derives for the same line.
+
+### Why
+
+- Milestone 4 trip mode needs a snapshot identity it can cache and execute against even after a later online re-derive produces a newer draft.
+- Milestone 5 reconciliation needs stable line references that are not coupled to whatever per-version row primary key happened to be written for one refresh cycle.
+- Keeping the mutable row id for backend persistence while adding explicit downstream-facing snapshot identifiers avoids breaking existing API consumers and makes the seam honest before offline/trip work lands.
+
+### Consequences
+
+- Confirmed-list payloads now carry an explicit version identity (grocery_list_version_id) and stable line identity (grocery_line_id) for downstream consumers.
+- Existing persisted grocery rows get a migration so pre-hardening data receives a stable line identity; the upgrade seeds stable_line_id from the existing row id.
+- Future trip-mode and reconciliation work should consume grocery_list_version_id + grocery_line_id instead of depending on current_version_id or raw line row IDs by convention alone.
+
+### Evidence
+
+- GROC-08 completion: stable grocery_list_version_id immutable after confirmation
+- GROC-09 completion: deterministic fixtures cover full lifecycle with version + line traceability
+- All 171 API tests passing; regression coverage proves version + line stability through re-derives
+
+---
+
+## Decision: McCoy — GROC-10 Grocery UI and End-to-End Verification (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** McCoy (QA Lead)  
+**Status:** ✅ APPROVED  
+**Scope:** Milestone 3 grocery UI / end-to-end verification gate (GROC-10)
+
+### Decision
+
+APPROVE. The grocery review slice now satisfies the GROC-10 chartered acceptance seam. Frontend helper coverage and Playwright acceptance coverage prove the user can derive a draft from the confirmed-plan seam, review traceability, preserve ad hoc and override intent across stale refresh, adjust quantities, and confirm a stable shopping version without silent mutation.
+
+### Why
+
+The previous grocery acceptance coverage proved only a subset of the review flow and did not explicitly demonstrate derive-from-empty, preserved user intent after refresh, or traceability detail persistence. Those seams are now covered by deterministic tests and the cross-stack regression evidence remained green, so there is no remaining blocker within the GROC-10 slice.
+
+### Evidence
+
+- Frontend regression additions:
+  - pps/web/app/_lib/grocery-ui.ts → helper-level regression coverage for meal trace labels
+  - pps/web/app/_lib/grocery-ui.test.ts → comprehensive helper tests
+  - pps/web/tests/e2e/grocery-acceptance.spec.ts → Playwright acceptance coverage
+  - pps/web/playwright.config.ts → config with PLAYWRIGHT_PORT support
+- Validation evidence:
+  - 
+pm run lint:web → clean ✅
+  - 
+pm run typecheck:web → clean ✅
+  - 
+pm run build:web → complete ✅
+  - 
+pm --prefix apps\web run test → 33 passed ✅
+  - set PLAYWRIGHT_PORT=3101 && npm --prefix apps\web run test:e2e -- tests/e2e/grocery-acceptance.spec.ts → E2E tests pass ✅
+  - python -m pytest apps\api\tests -q → 171 passed ✅
+  - 
+pm run test:worker → 9 passed ✅
+
+### Consequences
+
+- GROC-10 acceptance gate closed: grocery UI workflows verified complete
+- GROC-11 unblocked: Kirk ready for final Milestone 3 acceptance review
+- Full test suite stable: 213 deterministic tests passing (171 API + 33 web + 9 worker)
+
+### Next Steps
+
+Route to **Kirk** for GROC-11 final Milestone 3 acceptance review. Kirk should confirm the approved grocery implementation still respects the roadmap cut line and did not quietly absorb Milestone 4 trip-mode or Milestone 5 reconciliation scope.
+
