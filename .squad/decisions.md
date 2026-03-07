@@ -1834,3 +1834,99 @@ Then escalate recommendation for dedicated UI/UX specialist or external design c
 - .squad/decisions/inbox/kirk-separation-of-duties.md — full assessment and rationale
 
 
+---
+
+## Git Workflow & Hygiene Directive (2026-03-09 — Kirk)
+
+**Date:** 2026-03-09  
+**Owner:** Kirk (Lead)  
+**Status:** ✅ ACTIVE BINDING DIRECTIVE  
+**Scope:** All contributors; enforced at review and merge gates
+
+### Problem Statement
+
+Large untracked trees, uncoordinated commits, and local-only branches create invisible state changes and data loss risk. Without explicit workflow discipline, team members cannot safely coordinate merges or resolve conflicts.
+
+### Decision: Binding Git Workflow Framework
+
+All contributors to `meal-planner-v02` must follow these binding directives:
+
+#### 1. **Commit Discipline** (REQUIRED)
+- **One logical unit per commit:** one feature, one bug fix, one decision. Never mix unrelated changes.
+- **Exclude all generated files:** `bin/`, `obj/`, `.next/`, `dist/`, `*.egg-info`, `.next-dev/`, `.playwright-artifacts/`, `.pytest_cache/`, `__pycache__/`, `*.pyc`, `.tsbuildinfo`
+- **Commit message format:**
+  ```
+  [SCOPE]: Brief one-line summary
+  
+  - Detailed explanation of what changed and why
+  - One change per bullet
+  - Link to relevant decision, spec, or task ID if applicable
+  
+  Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+  ```
+- **Pre-commit verification:** `git status` and `git diff --cached` before every commit to ensure no build artifacts are staged.
+
+#### 2. **Push Discipline** (REQUIRED)
+- **Every commit must be pushed within the session it's created.** Never accumulate more than 3 unpushed commits.
+- **Push at natural break points:** after spec approval, after tests pass, after decision merge.
+- **If origin is ahead of your feature branch:** Rebase, never merge:
+  ```bash
+  git fetch origin
+  git rebase origin/main
+  git push origin --force-with-lease <feature-branch>
+  ```
+
+#### 3. **Squad File Discipline** (REQUIRED)
+- **All `.squad/` files must be tracked and committed together** in atomic batches.
+- **Commit pattern:** `docs: [describe what the decision/log records]`
+- **Never leave `.squad/` files untracked for more than one session.** Untracked decisions are invisible to the team.
+- **Append-only files** (`.squad/decisions.md`, agent histories, logs) use union merge strategy (configured in `.gitattributes`).
+
+#### 4. **Feature Branch Merge Strategy** (REQUIRED)
+- **Verify all tests pass locally:** `npm run build:web && npm run test:api && npm run test:worker && npm run lint:web && npm run typecheck:web`
+- **Rebase to main before merge:** `git rebase origin/main && git push origin --force-with-lease <feature-branch>`
+- **Merge strategy:** Squash-and-merge via GitHub PR (single comprehensive commit with full attribution).
+- **Preserve feature branch as backup tag** before deleting: `git tag feature/<name>-backup <sha>`
+
+#### 5. **.gitattributes Enforcement** (REQUIRED)
+- Line endings: `eol=lf` enforced on all source files (already configured)
+- Binary files: `*.db`, `*.pyc`, `*.egg-info` marked as binary
+- Append-only merge strategy: configured for `.squad/decisions.md`, agent histories, logs, and orchestration records
+
+#### 6. **Escalation Paths**
+- **Branch diverges >50 commits from main:** Kirk decomposes into smaller merge windows
+- **Merge conflict on `.squad/` files:** Kirk manually resolves (union merge catches append-only issues)
+- **Tracked artifact discovered after merge:** Kirk branches back and removes (fast-forward main)
+- **Line-ending violations at CI:** Reject PR; require local `git reset --hard` and re-push
+
+### Implementation Evidence
+
+- ✅ `.squad/skills/git-workflow` created with full reference documentation
+- ✅ `.gitattributes` updated with `eol=lf` enforcement and union merge strategies
+- ✅ `.gitignore` hardened to exclude build artifacts (bin/, obj/, .next/, *.egg-info, .aspire/)
+- ✅ `feature/git-publish-readiness-clean` branch cleaned: all 12 local commits pushed to origin; 100% tree tracked
+- ✅ All 70+ untracked `.squad/` files committed in logical batches (decisions, logs, orchestration)
+
+### Why This Matters
+
+1. **Invisible state changes disappear.** Untracked squad files meant the team couldn't see decisions/logs without manual inspection.
+2. **Merge reversions become safe.** One logical unit per commit enables clean `git revert <sha>`.
+3. **Lost commits are prevented.** Push discipline ensures all work lives on `origin/`; no local-only single points of failure.
+4. **Conflict resolution is clear.** Union merge strategy handles append-only squad files without manual conflict resolution.
+5. **CI/CD stays clean.** `.gitattributes` + `core.safecrlf=true` prevents CRLF whitespace pollution and bloated diffs.
+
+### Downstream Gates
+
+- **PR review gates:** Kirk or designated reviewer verifies commit discipline (one logical unit, no artifacts, proper message format).
+- **Merge gates:** Full test suite must pass green; feature branch must be rebased on main.
+- **Squad file merge:** Kirk manually resolves any true conflicts (union merge catches only append-only issues).
+
+### Related Documents
+
+- Reusable skill: `.squad/skills/git-workflow`
+- Enforcement config: `.gitattributes`, `.gitignore`
+- Routing: `.squad/routing.md` (design/accessibility review ownership)
+
+**Binding on this project; extensible to other squad projects.**
+
+

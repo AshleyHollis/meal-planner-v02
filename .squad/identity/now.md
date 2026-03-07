@@ -3,10 +3,11 @@
 - Milestone 2 (Weekly planner and explainable AI suggestions): **✅ COMPLETE AND APPROVED.** All 12 tasks done; Kirk signed off 2026-03-08.
 - Milestone 3 (Grocery derivation and review): **✅ COMPLETE AND APPROVED.** All 11 tasks done; Kirk signed off GROC-11 2026-03-09.
 - **Milestone 4 execution advancing:** Offline sync, trip mode, conflict review. SYNC-01 ✅ complete (Sulu locked contract seam 2026-03-09T02-00-00Z). SYNC-02 ✅ complete (Uhura offline store 2026-03-09), SYNC-03 ✅ complete (Uhura trip UX 2026-03-09), SYNC-04 ✅ complete (Scotty upload API 2026-03-09), SYNC-05 ✅ complete (Scotty classifier 2026-03-09). **SYNC-06 now active** (Scotty explicit resolution commands, ready_now). Local dev environment restored 2026-03-09T06-00-00Z.
-- **CURRENT SESSION (Ashley Hollis, 2026-03-09):** Full application Milestone 4 build continuing. Local dev environment stable and responsive.
-  - **Status:** SYNC-01 through SYNC-05 complete; SYNC-06 (resolution commands) now active; SYNC-07/08 ready to queue; SYNC-09/10/11 verification gates queued.
+- **CURRENT SESSION (Ashley Hollis, 2026-03-09):** Full application Milestone 4 build continuing with Git hygiene hardening applied. Local dev environment stable and responsive.
+  - **Status:** SYNC-01 through SYNC-08 complete; **SYNC-09 and SYNC-10 (verification gates) now active**; SYNC-11 ready to follow.
   - **Environment:** Local Aspire running (4 dotnet + 5 node + 10 Python processes); web, API, worker services all responsive; all build/test tools operational; database schema stable.
-  - **Governance:** Manual visual smoke testing mandatory at milestone end (built into SYNC-10); separation of testing and review confirmed; no staffing blockers.
+  - **Governance:** Git hygiene process hardening integrated (easy revert/merge workflows prioritized). Manual visual smoke testing mandatory at milestone end (built into SYNC-10); separation of testing and review confirmed; no staffing blockers.
+  - **Git Practice:** Hard copies of feature branches preserved before merge; conflict-safe revert markers in place; CI automation enforced before integration.
 - Locked constraints: Backend-only Auth0, AI-advisory-only, confirmed-plan-protection, SQL-backed trust data, roadmap-aware grocery-derivation dependencies, Milestone 3 scope cut-line (no trip/reconciliation work).
 
 
