@@ -903,6 +903,274 @@ Downstream milestones (Meal Planning, Grocery/Trip, Reconciliation) can now safe
 | Dual \package-lock.json\ cleanup | TBD | Low — housekeeping |
 | Metrics/instrumentation (spec §15) | TBD | Medium — post-deployment |
 | Batch mutation support (spec §8.4) | TBD | Medium — offline sync prerequisite |
+
+---
+
+## Decision: Sulu — AIPLAN-04 Worker/Runtime Seam (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Sulu (Backend Engineer)  
+**Task:** AIPLAN-04 — Implement worker grounding, prompt building, validation, and fallback  
+**Verdict:** ✅ APPROVED
+
+### Decision
+
+Persist `fallback_mode` as explicit string contract (`none`, `curated_fallback`, `manual_guidance`) instead of a boolean flag, and centralize AI generation logic in a worker-owned runtime package (`apps/worker/worker_runtime/`) that the API calls for request completion.
+
+### Why
+
+- The approved AI architecture and feature spec require visible distinction between curated fallback and manual guidance; a boolean cannot preserve that provenance honestly.
+- Keeping grounding, prompt rendering, validation, reuse, and fallback logic in the worker runtime preserves the API/worker boundary even when local/background execution uses the same process during current milestone verification.
+- This keeps planner request polling stable for Scotty/Uhura while giving McCoy/Spec deterministic seams to test and reason about.
+
+### Cross-team impact
+
+- Scotty can rely on string fallback modes flowing through request/result persistence, draft slots, and confirmation history.
+- Uhura can surface `curated_fallback` versus `manual_guidance` distinctly in planner review/regeneration UX without inferring hidden state.
+- McCoy/Spec should treat the worker runtime as the canonical source for grounding hash, prompt/version metadata, and equivalent-result reuse behavior.
+
+### Evidence
+
+- `cd apps\worker && python -m pytest tests\test_generation_worker.py` ✅
+- Worker runtime deterministic fallback/regen metadata assertions pass
+
+---
+
+## Decision: Scotty — AIPLAN-05 Confirmation Event Seam (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Scotty (Backend Engineer)  
+**Task:** AIPLAN-05 — Implement stale detection, confirmation flow, and history writes  
+**Verdict:** ✅ APPROVED
+
+### Decision
+
+Planner confirmation writes a durable `planner_events` row in the same transaction as the confirmed plan mutation and per-slot history records. The first emitted contract is `plan_confirmed`, with a JSON payload carrying household, confirmed plan, period, confirmation mutation ID, actor ID, slot count, stale-ack flag, and plan version.
+
+### Why
+
+- This keeps the confirmation handoff append-only and transactionally aligned with the authoritative state change instead of relying on an in-memory callback after commit.
+- It gives AIPLAN-09 a clean seam to contract-test without forcing the team to invent a full cross-service event transport before grocery derivation is ready.
+- Confirmation retries with the same mutation ID stay safe because both the confirmed plan record and the event row are keyed by the household-scoped confirmation mutation.
+
+### Consequences
+
+- Downstream grocery work should read `planner_events` / `plan_confirmed` as the authoritative server-confirmed trigger until a broader outbox publisher is introduced.
+- Suggestion and draft states remain unable to trigger grocery work because they do not write planner events.
+
+### Evidence
+
+- Confirmation idempotency tests pass
+- Per-slot history writes persist correctly
+- `plan_confirmed` event payload carries full handoff contract
+
+---
+
+## Decision: Uhura — AIPLAN-07 Planner Wiring Decision (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Uhura (Frontend Engineer)  
+**Task:** AIPLAN-07 — Wire the web planner client to real planner endpoints  
+**Verdict:** ✅ APPROVED
+
+### Decision
+
+The planner web client now treats backend draft and request resources as the only source of truth for planner state. Frontend-only fallback drafts and local-only slot edits/regenerations are removed from the planner flow.
+
+### Why
+
+- Ashley locked planner work to backend-owned session and household authority.
+- Scotty's planner router now exposes real draft edit, revert, regenerate, confirm, and request-polling endpoints.
+- Keeping local-only draft or slot state would create a false impression that unpersisted planner work is authoritative.
+
+### Frontend impact
+
+- Planner requests use `activeHouseholdId` from the API-owned session bootstrap contract.
+- Suggestion and regeneration flows poll the canonical `GET /api/v1/households/{household_id}/plans/requests/{request_id}` lifecycle endpoint.
+- Opening a draft uses Scotty's `replaceExisting` flag instead of fabricating a local replacement draft.
+- Slot save/restore actions now call the real PATCH/POST draft slot endpoints.
+- The empty planner state only offers "Request AI suggestion" until a backend manual-draft creation contract exists.
+
+### Follow-on
+
+AIPLAN-08 should build UX polish on this backend-owned state model, not reintroduce local planner-authority shortcuts.
+
+### Evidence
+
+- Frontend routing tests verify endpoint calls
+- No local-only draft state remains in planner component logic
+
+---
+
+## Decision: McCoy — AIPLAN-06 Backend/Worker Contract Verification (2026-03-08)
+
+**Date:** 2026-03-08  
+**Reviewer:** McCoy (Tester)  
+**Scope:** Milestone 2 backend + worker contract slice (`apps/api`, `apps/worker`)  
+**Verdict:** ✅ APPROVED
+
+### Rationale
+
+The slice now has direct automated evidence for the required backend/worker acceptance areas: draft creation, slot edit/revert, regeneration lifecycle, stale detection, confirmation idempotency, provenance/history/event writes, and failure/fallback behavior. Added regression coverage for pending regeneration state before worker completion, and stale-confirm provenance persistence through confirmation history plus `plan_confirmed` event payloads.
+
+### Added verification
+
+- `apps/api/tests/test_planner.py`
+  - Per-slot regeneration enters `pending_regen`, dedupes duplicate retries, clears pending state after worker completion, and refreshes slot provenance metadata from the regeneration request/result.
+  - Stale-confirm regression proves `stale_warning_acknowledged` persists onto the confirmed plan, all `meal_plan_slot_history` rows, and the emitted `planner_events` payload.
+- `apps/worker/tests/test_generation_worker.py`
+  - Curated-fallback assertions verify persisted fallback metadata (`reason_codes`, explanation text, uses_on_hand, missing_hints`) rather than only status flags.
+  - Successful slot-regeneration regression proves only the targeted slot is rewritten and that request/result lineage, prompt metadata, fallback mode, and regen cleanup fields are updated correctly.
+
+### Evidence
+
+- `cd apps\api && python -m pytest tests\test_planner.py` ✅
+- `cd apps\worker && python -m pytest tests\test_generation_worker.py` ✅
+- `cd apps\api && python -m pytest tests` ✅ (all tests)
+- `cd apps\worker && python -m pytest tests` ✅ (all tests)
+
+### Immediate next step
+
+Proceed with remaining Milestone 2 acceptance chain: UI/error-state completion (AIPLAN-08), grocery handoff/observability hardening (AIPLAN-09/AIPLAN-10), then McCoy's UI/E2E gate (AIPLAN-11).
+
+---
+
+## Decision: McCoy — AIPLAN-11 Planner UI/E2E Verification (2026-03-08)
+
+**Date:** 2026-03-08  
+**Reviewer:** McCoy (Tester)  
+**Scope:** Milestone 2 planner UI + end-to-end acceptance coverage (`apps/web`, supporting planner API contract tests)  
+**Verdict:** ✅ APPROVED
+
+### Rationale
+
+The planner UI slice now has direct automated evidence for the user journeys required: request → review → edit → confirm, stale-warning acknowledgment on the confirmation path, per-slot regeneration without contaminating sibling slots, confirmed-plan protection while a replacement draft is under review, and visible failure/manual fallback messaging. Tightened the frontend-side regression seam so the new Playwright journeys sit on top of explicit planner API contract assertions for stale draft mapping and confirmation payload/response handling.
+
+### Added verification
+
+- `apps/web/tests/e2e/planner-acceptance.spec.ts`
+  - Full protected-confirmed-plan replacement journey covering request, review, slot edit, slot regeneration, stale-warning acknowledgment, and final confirmation.
+  - Targeted regen-failure regression proving the slot falls back to the user's last safe meal and keeps the rest of the draft interactive.
+  - Manual-guidance/request-failure regression proving fallback and service-failure states stay honest and retryable in the UI.
+- `apps/web/app/_lib/planner-api.test.ts`
+  - Stale-warning draft mapping coverage so the draft warning contract is asserted before it reaches the UI.
+  - Confirmation contract coverage proving `staleWarningAcknowledged` is posted and the confirmed-plan response shape is preserved.
+
+### Evidence
+
+- `npm --prefix apps\web run test` ✅
+- `npm --prefix apps\web run test:e2e -- tests/e2e/planner-acceptance.spec.ts` ✅
+- `npm run lint:web` ✅
+- `npm run typecheck:web` ✅
+- `python -m pytest apps\api\tests\test_planner.py` ✅
+- `npm run test:worker` ✅
+- `npm run test:api` ✅
+
+### Visibility note
+
+`npm run build:web` currently fails in the shared workspace with Next.js page collection errors for `/api/[...path]`, `/_not-found`, and `/grocery`. This issue is outside the planner-specific journeys and marked for separate stabilization check.
+
+### Immediate next step
+
+Hand Milestone 2 to Kirk for AIPLAN-12 final acceptance review, with the shared-workspace build failure called out as a separate stabilization check outside the planner journey coverage itself.
+
+---
+
+## Decision: Scotty — AIPLAN-09/AIPLAN-10 Grocery Handoff & Observability (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Scotty (Backend Engineer)  
+**Tasks:** AIPLAN-09 (Emit and contract-test the grocery handoff seam) + AIPLAN-10 (Add planner observability and deterministic fixtures)  
+**Verdict:** ✅ APPROVED
+
+### Decision (AIPLAN-09: Grocery Handoff)
+
+Use the existing durable `plan_confirmed` planner event as the Milestone 2 grocery handoff seam, but harden its payload so downstream consumers receive an explicit `grocery_refresh_trigger` contract with `source_plan_status = confirmed`, confirmed plan/version identifiers, and a request-scoped correlation ID.
+
+### Why (AIPLAN-09)
+
+- The feature spec says grocery derivation may only read confirmed plan state, so the trigger itself needs to state that contract instead of relying on implicit event naming alone.
+- Reusing the existing planner event outbox keeps confirmation + handoff atomic in one transaction and avoids inventing a second queue/table before Milestone 3 grocery derivation is implemented.
+- Carrying the originating suggestion request ID as the lifecycle correlation ID gives backend logs, worker logs, and the grocery handoff a shared thread for diagnosis without expanding the persistence model just for telemetry.
+
+### Consequences (AIPLAN-09)
+
+- Suggestion and draft states remain unable to trigger grocery work because they do not write planner events.
+- Downstream grocery derivation can safely key off one durable event contract now and ignore non-confirmed planner state entirely.
+- Unexpected worker exceptions now settle into a durable `failed` request state with logged correlation metadata, which improves supportability without changing the user-facing planner authority boundary.
+
+### Decision (AIPLAN-10: Observability)
+
+Planner API + worker lifecycle logs now carry correlation IDs, and deterministic fixtures cover happy path, stale, fallback, and failure outcomes for repeatable verification without flakiness.
+
+### Why (AIPLAN-10)
+
+Deterministic E2E fixtures enable repeatable testing without flakiness. Observability instrumentation is complete before Milestone 3 begins.
+
+### Evidence
+
+- Grocery handoff seam carries explicit `grocery_refresh_trigger` contract
+- API regression coverage proves suggestion/draft states emit no grocery handoff signal
+- Confirmation contracts emit only on confirmed state
+- Deterministic fixtures cover happy path, stale, fallback, and failure outcomes
+- All E2E tests use deterministic seeding
+
+---
+
+## Decision: Kirk — AIPLAN-12 Final Milestone 2 Acceptance Review (2026-03-08)
+
+**Date:** 2026-03-08  
+**Author:** Kirk (Lead)  
+**Status:** ✅ APPROVED  
+**Scope:** Milestone 2 (Weekly planner and explainable AI suggestions)  
+**Spec:** `.squad/specs/ai-plan-acceptance/feature-spec.md`  
+**Progress:** `.squad/specs/ai-plan-acceptance/progress.md`
+
+### Decision
+
+**Milestone 2 is approved.** The repo now delivers the planner/AI milestone outcome: a household can request an async AI suggestion, review and edit a draft, regenerate individual slots, confirm the final plan, preserve per-slot AI origin history for audit, and keep grocery derivation gated exclusively on confirmed plan state.
+
+### Evidence
+
+- **API:** 144 tests passed (0 failed)
+- **Worker:** 9 tests passed (0 failed)
+- **Web:** 26 tests passed (0 failed)
+- **Lint/Typecheck/Build:** All clean and green
+- **14 acceptance criteria:** All verified independently against implementation code
+- **Constitution alignment:** 2.4, 2.5, 2.3, 2.7, 4.1, 5.1-5.3 confirmed; 2.2 (offline) honestly deferred to Milestone 4
+
+### Rationale
+
+Every acceptance criterion passes with automated evidence. The three-state plan model (suggestion → draft → confirmed) is cleanly separated in storage, API, and UI. Per-slot regeneration is properly scoped. Stale detection uses grounding hash comparison. Confirmed plan protection is unconditional. The grocery handoff seam emits only on confirmed state. The previously noted build failure is resolved. Cross-milestone deferred work is tracked openly in AIPLAN-13 and AIPLAN-14.
+
+### Explicit follow-ups
+
+1. **AIPLAN-13 (Milestone 4):** Offline planner sync — deferred per roadmap
+2. **AIPLAN-14 (Milestone 3):** Grocery derivation consumption — handoff seam contract-tested, full engine is Milestone 3
+3. **Minor:** Add `manually_added` slot to mixed-confirmation test coverage
+4. **Inherited:** Auth0 production wiring, `datetime.utcnow()` deprecation, dual lockfile warning
+
+### Next step
+
+The team should proceed to Milestone 3 (Grocery Derivation) planning, which can now safely build on the confirmed-plan handoff contract proved in this milestone.
+
+---
+
+## Decision: Kirk — Publish History Repair via Clean Replay Branch (2026-03-08)
+
+**Date:** 2026-03-08  
+**Owner:** Kirk (Lead)  
+**Context:** GitHub rejected the feature-branch push because unpublished local history still contained tracked generated content under `apps/web/node_modules`, even though the current tree had already removed those artifacts.
+
+### Decision
+
+Preserve the verified source tree by creating a safety backup branch, cutting a new feature branch from `origin/main`, and replaying the current verified repository state as a clean snapshot commit instead of publishing the contaminated unpublished history.
+
+### Consequences
+
+- The publishable branch keeps the real application, spec, and infrastructure changes that exist at the verified feature head.
+- Generated/dependency artifacts remain excluded because the clean branch is rooted at `origin/main`, the repaired `.gitignore` is preserved, and local-only Claude settings are now ignored.
+- The original local history remains recoverable from backup branches if deeper forensic review is needed.
 | E2E tests against live API | TBD | Medium — deployment readiness |
 
 ## Local Aspire/Auth/Git Blocker Triage (2026-03-08 — Kirk)
@@ -1055,3 +1323,299 @@ The team is enabled to push commits as required. This grants explicit permission
 **Resolution:** Feature/git-publish-readiness now clean and ready for safe republish to origin. No commits lost; full orchestration continuity preserved. Branch is integration-ready pending Team lead review (Kirk).
 
 **Team Authorization Confirmed:** Ashley Hollis directive (2026-03-07T14:20:38Z) remains in force; push permission explicitly granted. Recovery restores push readiness for immediate feature-branch publication.
+
+## AIPLAN-02/03 Backend Router & Lifecycle Seam Decision (2026-03-08)
+
+**Owner:** Scotty  
+**Artifact:** Planner router/service in pps/api/app/routers/planner.py and pps/api/app/services/planner_service.py  
+**Status:** ✅ APPROVED
+
+### Decision
+
+For Milestone 2 backend slice AIPLAN-02/03, the API exposes **both**:
+
+1. a household-period suggestion read (GET /api/v1/households/{household_id}/plans/suggestion?period=...) for the current planner page seam, and
+2. a canonical AI request polling read (GET /api/v1/households/{household_id}/plans/requests/{request_id}) for the approved AI request/result lifecycle.
+
+Draft slot revert does **not** store a second copy of the original AI meal text inside draft rows. Instead, it restores from the authoritative AI suggestion lineage already carried on each slot (i_suggestion_result_id + slot_key).
+
+### Rationale
+
+- The current web planner scaffold already expects a period-scoped suggestion lookup, so keeping that seam avoids a premature frontend/router mismatch while AIPLAN-07 is still pending.
+- The approved AI architecture explicitly requires request/result polling, so a request-ID endpoint is the stable contract that AIPLAN-04 worker code can own later without changing the user-facing draft flow again.
+- Reusing the persisted AI result lineage for revert keeps suggestion, draft, and confirmed-plan states distinct instead of serializing hidden draft-only copies of AI output into slot rows.
+
+### Consequences
+
+- AIPLAN-04 can replace the placeholder completion path with worker-driven execution while preserving both the request polling contract and the period-based planner read seam.
+- AIPLAN-07 can switch the frontend to rely more directly on request polling without needing another backend contract change.
+- If product later wants explicit draft-local revert snapshots independent of AI results, that should be a new schema decision rather than an accidental side effect of AIPLAN-02/03.
+
+### Validation
+
+- Household-scoped planner endpoints for suggestion, draft, and confirmation flows verified
+- Period-based suggestion read operational (GET /api/v1/households/{household_id}/plans/suggestion?period=...)
+- Draft management endpoints (open, read, edit, revert, regenerate) tested
+- Confirmation flow with idempotency via confirmation_client_mutation_id verified
+- Request lifecycle contracts tested: household-scoped idempotency, active-request deduplication, status transitions, stale-warning inheritance, confirmation idempotency
+- All API tests green; session/household scope enforced on all endpoints
+
+### Unblocks
+
+- **AIPLAN-04 (Sulu):** Worker implementation can begin using locked request/result contract
+- **AIPLAN-07 (Uhura):** Frontend wiring can switch from mocks to real API endpoints
+
+## AIPLAN-04: Worker Grounding, Prompt Building, Validation, and Fallback (2026-03-08 — Sulu)
+
+**Status:** ✅ APPROVED
+
+### Decision
+
+Worker execution path is now real and authoritative. Sulu implemented `apps/worker/worker_runtime/runtime.py` to process queued planner requests against SQL-backed household state. The worker assembles grounding from authoritative household/inventory/confirmed-plan data, computes a normalized grounding hash, versions prompt/policy/context/result contracts, validates provider output through app-owned structured contracts, and persists normalized slot payloads.
+
+### Implementation Details
+
+1. **Authoritative grounding from SQL state**
+   - Worker queries `households`, `inventory_items`, `meal_preferences`, `meal_history` to assemble context
+   - Computes `grounding_hash` from canonical data (used for equivalent-result reuse and stale detection)
+   - Never trusts client-supplied context; always derives grounding at execution time
+
+2. **Prompt and validation spine**
+   - System/task/context/schema prompt layers assembled explicitly
+   - Provider output validated through app-owned structured `PlatterResult` schema
+   - Persists normalized slot payloads with reason codes, explanation text, uses-on-hand, missing-hints
+
+3. **Tiered fallback behavior**
+   - Fresh equivalent results by grounding hash → curated deterministic meal-template fallback → manual guidance
+   - Single-slot regeneration keeps sibling draft slots untouched
+   - User's previous slot choice preserved if regen can only return manual guidance
+
+4. **Fallback provenance explicit**
+   - `fallback_mode` as string contract (`none`, `curated_fallback`, `manual_guidance`)
+   - Persists across AI results, draft slots, confirmation history
+   - Migration `rev_20260308_02_aiplan04_fallback_modes.py` makes seam reversible
+
+### Verification
+
+- `cd apps\api && python -m pytest tests` (111+ tests green)
+- `cd apps\worker && python -m pytest tests` (all green)
+- `cd apps\worker && python -m compileall app worker_runtime tests`
+
+### Unblocks
+
+- **AIPLAN-05 (Scotty):** Confirmation/stale logic can now call real worker execution
+- **AIPLAN-06 (McCoy):** Backend/worker contract gate can verify worker behavior
+
+## AIPLAN-05: Stale Detection, Confirmation Flow, and History Writes (2026-03-08 — Scotty)
+
+**Status:** ✅ APPROVED
+
+### Decision
+
+Confirmation now preserves append-only provenance history and emits a `plan_confirmed` handoff seam for downstream grocery derivation work.
+
+### Implementation Details
+
+1. **Stale-warning triggers from live grounding drift**
+   - `planner_service.py` compares completed suggestion requests against current worker grounding hash
+   - Inventory/context changes surface `stale` suggestions and `stale_warning` drafts on read/confirm
+
+2. **Confirmed-plan protection explicit**
+   - Confirmation advances new authoritative version for same household+period without mutating prior confirmed rows
+   - New suggestions/drafts leave previously confirmed plan untouched until next explicit confirmation
+
+3. **Append-only history and event writes**
+   - Confirmation writes `meal_plan_slot_history` per slot in same transaction
+   - Emits durable `planner_events` row with `event_type = plan_confirmed`
+   - Event payload carries household, confirmed plan, period, confirmation mutation ID, actor, slot count, stale-ack flag, plan version
+
+4. **Schema + migration coverage**
+   - `apps/api/app/models/planner_event.py` and migration `rev_20260308_03_aiplan05_planner_events.py`
+   - `apps/api/app/schemas/planner.py` validates event payload shape
+
+### Verification
+
+- `cd apps\api && python -m pytest tests\test_planner.py` (stale triggering, confirmed-plan protection, history/event writes)
+- `cd apps\worker && python -m pytest tests\test_generation_worker.py` (worker non-reuse when grounding changes)
+- Full repo: `cd apps\api && python -m pytest tests && cd apps\worker && python -m pytest tests` (all green)
+
+### Unblocks
+
+- **AIPLAN-09 (Scotty):** Grocery handoff seam `plan_confirmed` events ready to contract-test
+- **AIPLAN-10 (Scotty):** Observability can now instrument request/result lifecycle
+
+## AIPLAN-06: Verify Backend and Worker Contract Slice (2026-03-08 — McCoy)
+
+**Status:** ✅ APPROVED
+
+### Verdict
+
+Backend and worker Milestone 2 contract slice has explicit regression coverage for all acceptance areas: draft creation, slot edit/revert, regen lifecycle, stale detection, confirmation idempotency, provenance/history/event writes, fallback/manual-guidance behavior.
+
+### Verification Tightened
+
+1. **API regression (`apps/api/tests/test_planner.py`)**
+   - Slot regeneration exposes `pending_regen` state before worker completion
+   - Regen requests deduplicated correctly; pending state cleared after completion
+   - Slot provenance fields refreshed from regen result (`ai_suggestion_request_id`, `ai_suggestion_result_id`, `prompt_family`, `prompt_version`, `fallback_mode`)
+   - Stale-warning acknowledgement persists through confirmation into confirmed plan, slot-history rows, and `plan_confirmed` event payload
+
+2. **Worker regression (`apps/worker/tests/test_generation_worker.py`)**
+   - Curated fallback results persist visible fallback metadata (reason_codes, explanation text, uses-on-hand, missing-hints)
+   - Successful slot regeneration rewrites only targeted slot; request/result lineage, prompt metadata, regen status cleanup all updated
+
+### Evidence
+
+- `cd apps\api && python -m pytest tests\test_planner.py` ✅
+- `cd apps\worker && python -m pytest tests\test_generation_worker.py` ✅
+- `cd apps\api && python -m pytest tests` (111+ tests green) ✅
+- `cd apps\worker && python -m pytest tests` (all green) ✅
+
+### Unblocks
+
+- **AIPLAN-11 (McCoy):** UI/E2E verification gate can proceed
+- **AIPLAN-12 (Kirk):** Final Milestone 2 acceptance ready once AIPLAN-09/10 complete
+
+## AIPLAN-07: Wire Web Planner Client to Real Endpoints (2026-03-08 — Uhura)
+
+**Status:** ✅ APPROVED
+
+### Decision
+
+Planner web client now treats backend draft and request resources as the only source of truth. Frontend-only fallback drafts and local-only slot edits are removed.
+
+### Implementation Details
+
+1. **Backend-owned household scope**
+   - `PlannerView.tsx` uses `user.activeHouseholdId` for suggestion, draft, regeneration, confirmation
+   - Stops relying on compatibility alias or client-owned household assumptions
+
+2. **Real endpoint wiring**
+   - Suggestion and slot-regeneration flows poll canonical `GET /api/v1/households/{household_id}/plans/requests/{request_id}` lifecycle endpoint
+   - Opening suggestion-backed draft uses Scotty's `replaceExisting` contract
+   - Slot edits/restores call real draft slot PATCH/POST endpoints
+   - Draft replacement instead of hidden snapshots
+
+3. **Request lifecycle is real end-to-end**
+   - Suggestion and regen flows poll canonical request endpoint
+   - Preserve stale-ready results
+   - Refresh draft from backend state after regeneration
+
+### Verification
+
+- `npm run lint:web` ✅
+- `npm run typecheck:web` ✅
+- `npm run build:web` ✅
+- `npm --prefix apps\web run test` ✅
+- `apps/web/app/_lib/planner-api.test.ts` covers request polling, draft open, slot edit/revert, regen wiring, stale normalization
+
+### Unblocks
+
+- **AIPLAN-08 (Uhura):** Planner UX can now build on real endpoint wiring
+
+## AIPLAN-08: Complete Planner Review, Draft, Regen, and Confirmation UX (2026-03-08 — Uhura)
+
+**Status:** ✅ APPROVED
+
+### Decision
+
+Planner review and confirmation flow fully implemented with separated confirmed/draft states, stale-warning flow, fallback messaging, and AI provenance tracking restricted to draft/review surfaces.
+
+### Implementation Details
+
+1. **Confirmed and draft states visibly separate**
+   - Current confirmed plan remains visible while new AI suggestion or draft under review
+   - Replacement-focused confirmation copy when plan exists
+
+2. **Stale-warning acknowledgement on confirmation path**
+   - Prevents silent overwrite of previously confirmed plan
+   - Repeats on confirmation path
+
+3. **Fallback and per-slot recovery messaging clarified**
+   - `AISuggestionBanner.tsx`, `PlanSlotCard.tsx`, `planner-ui.ts` explain curated fallback/manual-guidance in plain language
+   - Surface reason-code/on-hand/missing-hint review details for AI-backed slots
+   - Keep per-slot regeneration failures anchored to last safe value or original suggestion
+
+4. **Confirmed-plan presentation suppresses AI provenance**
+   - `WeeklyGrid.tsx` and `PlanSlotCard.tsx` suppress AI badges/explanation in confirmed view
+   - Preserve richer AI review metadata in suggestion/draft states
+
+### Verification
+
+- `npm run lint:web` ✅
+- `npm run typecheck:web` ✅
+- `npm --prefix apps\web run test` ✅
+- `npm run build:web` ✅
+- `apps/web/app/_lib/planner-api.test.ts` (request polling, draft open, slot edit/revert, regen wiring, stale normalization)
+- `apps/web/app/_lib/planner-ui.test.ts` (fallback details, insufficient context, regen recovery, replacement labels)
+
+### Milestone 2 Phase 2 Handoff
+
+After AIPLAN-06 (backend gate) and AIPLAN-08 (planner UX) are approved, AIPLAN-09 and AIPLAN-10 transition to ready-now status for Scotty parallel execution.
+
+---
+
+## Sulu — AIPLAN-04 Worker/Runtime Seam (2026-03-08)
+
+**Decision:** Persist `fallback_mode` as explicit string contract (`none`, `curated_fallback`, `manual_guidance`) and centralize AI generation in worker-owned runtime package.
+
+**Why:** Feature spec requires visible distinction between curated fallback and manual guidance. Worker runtime preserves API/worker boundary while giving verification deterministic seams.
+
+**Cross-team impact:** Scotty can rely on string fallback modes through request/result/draft/confirmation. Uhura can surface modes distinctly in UX. McCoy can treat worker runtime as canonical for grounding, prompts, equivalent-result reuse.
+
+## Scotty — AIPLAN-05 Confirmation Event Seam (2026-03-08)
+
+**Decision:** Planner confirmation writes durable `planner_events` row in same transaction as confirmed plan mutation and per-slot history.
+
+**Why:** Keeps confirmation handoff append-only and transactionally aligned with state change. Gives AIPLAN-09 clean seam to contract-test without full cross-service event transport.
+
+**Consequences:** Confirmation retries with same mutation ID stay safe. Downstream grocery work reads `planner_events`/`plan_confirmed` as authoritative trigger.
+
+## Uhura — AIPLAN-07 Planner Wiring Decision (2026-03-08)
+
+**Decision:** Planner web client treats backend draft and request resources as only source of truth. Frontend-only fallback drafts and local-only slot changes removed.
+
+**Why:** Ashley locked planner to backend-owned session/household authority. Scotty's planner router exposes real endpoints. Keeping local-only state would create false impression unpersisted work is authoritative.
+
+**Frontend impact:** Suggestion/regen flows poll canonical request endpoint. Opening draft uses `replaceExisting` flag. Slot save/restore call real PATCH/POST endpoints. Empty state only offers "Request AI suggestion" until manual-draft creation contract exists.
+
+## McCoy — AIPLAN-06 Backend/Worker Verification (2026-03-08)
+
+**Verdict:** ✅ APPROVED
+
+Added regression coverage for regen pending→complete provenance, stale-confirm audit persistence, worker fallback/regen metadata. All acceptance gates verified; contract slice approved.
+
+## Kirk — Publish History Repair via Clean Replay Branch (2026-03-08)
+
+**Decision:** Preserve verified source tree by creating backup branch, cutting clean feature branch from `origin/main`, and replaying current verified repository state as clean snapshot commit.
+
+**Consequences:** Publishable branch keeps real application, spec, infrastructure changes. Generated/dependency artifacts excluded. Original local history recoverable from backup if needed.
+
+---
+
+## Sulu — GROC-01 Grocery Schema and Lifecycle Seams (2026-03-08)
+
+**Decision:** Use a **household-scoped grocery mutation receipt table** plus **version-level incomplete-slot warning payloads** as the Milestone 3 contract seam.
+
+**Why:**
+- Grocery mutations (`add ad hoc`, `adjust quantity`, `remove line`, `confirm list`) all require `client_mutation_id` for safe retries. A generic receipt table keyed by `(household_id, client_mutation_id)` keeps retries safe without forcing the line/list tables themselves to become the replay store (follows inventory foundation precedent from Milestone 1).
+- Incomplete ingredient data is a derivation-run outcome, not a line attribute. Storing incomplete-slot warnings on `grocery_list_versions` keeps the warning attached to the exact plan+inventory snapshot that produced the draft and avoids pretending a missing slot is just another grocery line.
+
+**Implementation:**
+- `apps/api/app/models/grocery.py` now includes `GroceryMutationReceipt` (keyed on household_id + client_mutation_id), list confirmation mutation IDs, version-level warning storage, offset inventory version references, and active/removed line metadata.
+- `apps/api/app/schemas/grocery.py` now exposes parsed incomplete-slot warnings and meal-source traceability so downstream teams can build the derivation/router/UI layers on the approved contract.
+- `apps/api/migrations/versions/rev_20260308_04_groc01_grocery_schema_seams.py` makes the seam reversible for current SQLite development and future migration hardening.
+- Regression coverage in `apps/api/tests/test_groc01_migration.py` proves household isolation, idempotency, and schema correctness.
+
+**Validation (2026-03-08):**
+- API test suite: 151 tests passed
+- API compileall: All modules compile
+- Web lint/typecheck/build: All green
+- Worker tests: 9/9 passed
+
+**Cross-team guidance:**
+- **Scotty (GROC-02/GROC-04):** Treat `grocery_mutation_receipts` as the authoritative idempotency seam when implementing mutation handlers. Build derivation from confirmed-plan event + current household inventory snapshot.
+- **Uhura (GROC-06/GROC-07):** Consume the warning payload from the current grocery list version and present it as list-level derivation honesty, not as per-line error badges.
+- **McCoy (GROC-05):** Verify against the new contract names: `confirmed_plan_version`, `required_quantity`, `offset_quantity`, `shopping_quantity`, `active`, and version-level `incomplete_slot_warnings`.
+
+**Milestone 3 Impact:** Schema and models are locked; GROC-02 (derivation engine) and GROC-04 (API router) can now proceed with confidence on a trustworthy foundation.
