@@ -95,6 +95,25 @@
 - **Decision recorded at:** `.squad/decisions/inbox/kirk-git-hygiene-directive.md`
 - **Follow-up:** When feature branch merges to main, rebase cleanly and squash commits into a single comprehensive merge commit with full attribution via Co-authored-by trailer.
 
+## Git Hygiene Binding Directive Finalized (2026-03-09)
+
+**Task:** Apply Git hygiene/process fix per Ashley Hollis directive — "continue build all of the app. We need to ensure that we are using Git well so it's easy to revert and merge changes."
+
+**Work completed:**
+
+1. **Binding directive published in decisions.md** (96 lines) — full coverage of commit discipline, push discipline, squad file discipline, merge strategy, and escalation paths.
+2. **Reusable squad skill published** at `.squad/skills/git-workflow` (78 lines) — comprehensive reference for team.
+3. **Routing.md updated** — added Git workflow enforcement routing (Kirk as process owner at PR/merge gates).
+4. **Repo/process files verified:**
+   - ✅ `.gitattributes`: line-ending enforcement (eol=lf) + union merge for append-only squad files
+   - ✅ `.gitignore`: build artifacts, generated files, IDE files properly excluded
+   - ✅ `feature/git-publish-readiness-clean`: all commits pushed to origin; clean worktree
+5. **Verification gates recorded** — log file committed; two logical commits (32b0af8b, cb1bbb09); binding completion decision record created.
+
+**Outcome:** Git hygiene process now explicitly binding and documented. Feature branch is clean; all work safely on `origin/`. Merge readiness will be gated on full test suite green + rebase on main before squash-and-merge to main via GitHub PR.
+
+**Status:** Binding on all workflow; extensible to other squad projects.
+
 ## Local Startup + Auth + Git Triage (2026-03-08)
 
 - **Root cause of Aspire load failure:** `AppHost.cs` registers zero resources — the Aspire dashboard starts but has nothing to orchestrate. This is Milestone 0 foundation work that was scaffolded but never completed.
