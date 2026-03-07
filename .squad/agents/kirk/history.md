@@ -60,6 +60,41 @@
 - **Post-Milestone 4 escalation point:** If systematic WCAG gaps or quality degradation appear, escalate recommendation for dedicated UI/UX specialist for Phase 2. For now, spec discipline + Kirk's acceptance gate provide sufficient governance.
 - **Documents updated:** routing.md, team.md, decisions.md (appended full decision), kirk-separation-of-duties.md (decision record created).
 
+## Git Hygiene Assessment & Directive (2026-03-09)
+
+- **Problem statement:** Team had 70+ untracked squad files, 78 uncommitted code changes, 9 unpushed commits, and CRLF line-ending inconsistencies.
+- **Root causes identified:**
+  1. No workflow discipline defined — team didn't have shared rules for when to commit, what to include, or how to push
+  2. Untracked files accumulated invisibly — `.squad/` logs and decisions sat untracked for days; generated code (`apps/web/.next-dev/`, `.playwright-artifacts/`) leaked into git
+  3. Local commits weren't pushed — highest data loss risk; 22+ commits were local-only in previous session
+  4. No merge strategy — unclear when feature branch would land on main and how
+  5. Line-ending configuration missing — `.gitattributes` didn't enforce LF/CRLF
+- **Solution implemented (4 commits, 12 total pushed):**
+  1. Created `.squad/decisions/inbox/kirk-git-hygiene-directive.md` with binding workflow rules:
+     - One logical unit per commit (feature, bug, decision); never mix unrelated changes
+     - Every commit must be pushed within the session it's created (max 3 unpushed commits)
+     - All `.squad/` files must be committed together, never left untracked
+     - Feature-to-main merge strategy: rebase + squash-and-merge via GitHub PR
+  2. Enhanced `.gitattributes` with explicit `eol=lf` enforcement for all source files + union merge for append-only `.squad/` files
+  3. Created `.squad/skills/git-workflow` as team reference for Git discipline (10+ sections covering commit, push, squad file, and merge strategies)
+  4. Committed all 70+ untracked `.squad/` files (decisions, logs, orchestration, specs) in two atomic commits: one for documentation consolidation, one for final squad state updates
+  5. Committed Milestone 4 application code (205 files, 37K insertions, removed 104 tracked build artifacts from `.next-dev/` and `.playwright-artifacts/`)
+  6. Pushed all 12 local commits to `origin/feature/git-publish-readiness-clean`
+- **Key learnings:**
+  - Large untracked trees are invisible state changes; visible git status (clean, all committed) is essential for team confidence
+  - Commit discipline (one logical unit) + push discipline (per-session) prevent both lost work and merge confusion
+  - Line-ending enforcement via `.gitattributes` + `core.safecrlf=true` prevents CRLF whitespace pollution that bloats diffs
+  - Squad files should use union merge strategy for append-only patterns (decisions.md, agent histories); Kirk manually resolves true conflicts
+  - When build artifacts leak into tracking (`.next-dev/`, `.egg-info/`, `*.pyc`), `git rm --cached` + `.gitignore` fix + amend commit is the cleanest recovery path
+- **Outcomes:**
+  - All local work now safely on `origin/`; zero data loss risk on this branch
+  - Commit history is clean (4 logical units: infrastructure, squad consolidation, app code, team updates) and fully reversible
+  - Squad state is 100% tracked; no invisible changes
+  - Team has explicit workflow rules in .squad/routing.md and .squad/skills/git-workflow for future sessions
+  - Directive is binding on this project; extensible to other squad projects
+- **Decision recorded at:** `.squad/decisions/inbox/kirk-git-hygiene-directive.md`
+- **Follow-up:** When feature branch merges to main, rebase cleanly and squash commits into a single comprehensive merge commit with full attribution via Co-authored-by trailer.
+
 ## Local Startup + Auth + Git Triage (2026-03-08)
 
 - **Root cause of Aspire load failure:** `AppHost.cs` registers zero resources — the Aspire dashboard starts but has nothing to orchestrate. This is Milestone 0 foundation work that was scaffolded but never completed.
