@@ -368,3 +368,73 @@
 - Session logs: .squad/log/2026-03-08T22-00-00Z-groc08-groc09-complete-groc10-ready.md and .squad/log/2026-03-09T00-00-00Z-groc10-complete-groc11-ready.md
 - Orchestration logs: .squad/orchestration-log/2026-03-08T22-00-00Z-groc08-groc09-completion-groc10-handoff.md and .squad/orchestration-log/2026-03-09T00-00-00Z-groc10-approval-groc11-handoff.md
 - No blocking decisions or issues detected. Full app buildable, testable, and verifiable. Continuous execution ready for Milestone 3 completion.
+
+---
+
+## Milestone 3: Grocery Calculation and Review — COMPLETE (2026-03-09T01-00-00Z)
+
+**Status:** ✅ COMPLETE AND APPROVED
+
+**Final gate:** Kirk executed GROC-11 (final Milestone 3 acceptance review) and approved all 11 GROC task deliverables against chartered scope and roadmap cut line.
+
+**Key accomplishments:**
+- All 11 GROC tasks delivered and verified (GROC-01 through GROC-11)
+- Schema and lifecycle seams stable (GROC-01)
+- Derivation engine deterministic and confirmed-plan-only (GROC-02)
+- Refresh orchestration correct with stale detection (GROC-03)
+- API router live and contract-aligned (GROC-04)
+- Backend verification approved (GROC-05): confirmed-plan regression, staple handling, conservative offsets, duplicate consolidation, stale detection, idempotency all green (166 API tests)
+- Web API wiring complete (GROC-06)
+- Review UX finished: inline disclosure, quantity overrides, removed-lines tracking, confirmation modal (GROC-07)
+- Trip/reconciliation handoff seams delivered: stable list-version ID, stable line ID, offset references, confirmed_at timestamp, mutation ID idempotency scope (GROC-08)
+- Observability and deterministic fixtures complete: correlation-aware trace events, incomplete-slot diagnostics, stale-detection traces, deterministic fixtures (GROC-09)
+- UI E2E verification approved: full workflows tested, desktop/phone layouts validated, derivation determinism confirmed, stale-draft refresh verified, list stability verified, no scope bleed (GROC-10)
+- Final acceptance approved: scope compliance verified, no trip-mode bleed, no reconciliation bleed (GROC-11)
+
+**Test coverage at completion:**
+- API tests: 171 passed ✅
+- Web tests: 33 passed ✅
+- Worker tests: 9 passed ✅
+- Web build: Complete ✅
+- Web lint: Clean ✅
+- Web typecheck: Clean ✅
+- E2E acceptance (Playwright): Green ✅
+
+**Outcome:** The household can turn the approved weekly plan plus inventory into a trustworthy grocery list and review it before shopping. Confirmed grocery lists are stable, version-locked, and ready for downstream trip and reconciliation workflows.
+
+**Roadmap impact:** Milestone 3 marked complete. Milestone 4 (Mobile trip + offline sync) planning activated. All dependencies for Milestone 4 satisfied.
+
+**Constitution alignment:** 2.1 (Mobile Shopping), 2.4 (Trustworthy Planning/Inventory), 2.6 (Food Waste Reduction) all verified.
+
+**Zero blocking issues. Full app buildable, testable, and verifiable.**
+
+---
+
+## Milestone 4 Activation (2026-03-09T01-00-00Z)
+
+**Status:** 🚀 PLANNING ACTIVE
+
+**Roadmap scope:** Mobile trip mode, offline queueing, and conflict-safe sync. A shopper can execute the trip on a phone, remain productive under poor connectivity, and recover safely when sync conflicts occur.
+
+**Why Milestone 4:**
+- Constitution requires offline-capable essential shopping workflows in MVP, but sync depends on stable grocery/inventory/API boundaries
+- Confirmed lists from Milestone 3 are source of truth
+- Sync/conflict contracts from Milestone 0 provide scaffolding
+
+**Dependencies satisfied:** Milestone 1 ✅, Milestone 3 ✅, Milestone 0 sync scaffolding ✅
+
+**Key deliverables:**
+- Mobile-first trip UI with touch-optimized layout
+- IndexedDB-backed offline store for list/plan/inventory snapshot
+- Mutation intent model for offline check-off/edits/ad hoc items
+- Sync engine: replay, retry, deduplication, conflict detection
+- User-visible conflict UX with recovery affordances
+
+**Next phase:** Detailed spec-first planning, TRIP-01 through TRIP-NN task breakdown, team execution.
+
+**Constitution alignment:** 2.1 (Mobile Shopping), 2.2 (Offline Required), 2.3 (Household Coordination), 2.7 (UX Quality).
+
+**Roadmap updated:** .squad/project/roadmap.md (Milestone 3 complete, Milestone 4 planning active).
+
+**Zero blocking issues.**
+

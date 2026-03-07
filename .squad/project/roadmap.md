@@ -72,10 +72,10 @@ This roadmap turns the approved constitution, PRD, and architecture into a pract
 
 ---
 
-### Milestone 2 — Weekly planner and explainable AI suggestions **[MVP]** 🚀 PLANNING ACTIVE
+### Milestone 2 — Weekly planner and explainable AI suggestions **[MVP]** ✅ COMPLETE
 **Outcome:** A user can build a weekly plan manually or start from editable AI suggestions grounded in household context, with clear fallback and explanation behavior.
 
-**Status:** 🚀 Now active for specification and planning. Milestone 1 foundation (household-scoped authoritative inventory) is complete and approved. Specification work should begin on weekly planner contracts, AI grounding pipeline, and async worker integration before implementation begins.
+**Status:** ✅ Completed on 2026-03-08. All 12 feature-spec acceptance criteria verified and approved by Kirk. Three-state plan model (suggestion → draft → confirmed), per-slot regeneration, stale detection, confirmed-plan protection, grocery handoff seam, worker-backed async generation with tiered fallback modes, and full observability instrumentation now available.
 
 **Scope**
 - Weekly planner UI and API contracts.
@@ -107,8 +107,10 @@ This roadmap turns the approved constitution, PRD, and architecture into a pract
 
 ---
 
-### Milestone 3 — Grocery calculation and review before the trip **[MVP]**
+### Milestone 3 — Grocery calculation and review before the trip **[MVP]** ✅ COMPLETE
 **Outcome:** The household can turn the approved weekly plan plus inventory into a trustworthy grocery list and review it before shopping.
+
+**Status:** ✅ Completed on 2026-03-09. All 11 GROC task acceptance criteria verified and approved by Kirk. Grocery derivation engine, deterministic offset rules, review/confirmation UX, confirmed-list handoff seams, observability instrumentation, and full test coverage (171 API + 33 web + 9 worker tests) now available.
 
 **Scope**
 - Grocery derivation rules from meal plan plus current inventory.
@@ -132,8 +134,10 @@ This roadmap turns the approved constitution, PRD, and architecture into a pract
 
 ---
 
-### Milestone 4 — Mobile trip mode, offline queueing, and conflict-safe sync **[MVP]**
+### Milestone 4 — Mobile trip mode, offline queueing, and conflict-safe sync **[MVP]** 🚀 PLANNING ACTIVE
 **Outcome:** A shopper can execute the trip on a phone, remain productive under poor connectivity, and recover safely when sync conflicts occur.
+
+**Status:** 🚀 Now active for specification and planning (2026-03-09). Milestone 3 complete (confirmed-list handoff seam verified). Specification work should begin on mobile trip UI, offline store schema, mutation intent model, and sync/conflict detection logic before implementation begins.
 
 **Scope**
 - Mobile-first trip mode with large touch targets, low-typing interactions, and phone-sized layout validation.
@@ -210,15 +214,15 @@ This roadmap turns the approved constitution, PRD, and architecture into a pract
 
 ## 5. MVP Dependency View
 
-| Milestone | Depends on | Unlocks |
-| --- | --- | --- |
-| 0. Foundation and delivery spine | shared-infra prerequisites | all implementation work |
-| 1. Household + inventory foundation | 0 | planning, grocery, trip, reconciliation |
-| 2. Weekly planner + AI suggestions | 1, 0 worker setup | grocery derivation |
-| 3. Grocery calculation + review | 1, 2 | trip mode and reconciliation |
-| 4. Mobile trip + offline sync | 1, 3, 0 sync scaffolding | trustworthy in-store usage |
-| 5. Shopping/cooking reconciliation | 1, 3, 4 | closed-loop inventory trust |
-| 6. MVP hardening and launch readiness | 0-5 | releasable MVP |
+| Milestone | Status | Depends on | Unlocks |
+| --- | --- | --- | --- |
+| 0. Foundation and delivery spine | ✅ complete | shared-infra prerequisites | all implementation work |
+| 1. Household + inventory foundation | ✅ complete | 0 | planning, grocery, trip, reconciliation |
+| 2. Weekly planner + AI suggestions | ✅ complete | 1, 0 worker setup | grocery derivation |
+| 3. Grocery calculation + review | ✅ complete | 1, 2 | trip mode and reconciliation |
+| 4. Mobile trip + offline sync | 🚀 planning active | 1, 3, 0 sync scaffolding | trustworthy in-store usage |
+| 5. Shopping/cooking reconciliation | ⏳ planned | 1, 3, 4 | closed-loop inventory trust |
+| 6. MVP hardening and launch readiness | ⏳ planned | 0-5 | releasable MVP |
 
 ## 6. Cross-Cutting Workstreams That Should Run Alongside MVP
 - **Feature-spec track:** each non-trivial milestone should produce or refine feature specs before implementation, especially for inventory mutation rules, planner/AI behavior, grocery derivation, sync/conflict handling, and reconciliation UX.
