@@ -1,7 +1,7 @@
 # Grocery Derivation Progress
 
 Date: 2026-03-08
-Status: 🚀 **MILESTONE 3 PLANNING ACTIVE**
+Status: 🚧 **MILESTONE 3 BACKEND IN PROGRESS**
 Spec: `.squad/specs/grocery-derivation/feature-spec.md`
 Tasks: `.squad/specs/grocery-derivation/tasks.md`
 
@@ -11,6 +11,7 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 - Milestone 2 is complete and approved; confirmed weekly plans, stale-warning rules, per-slot provenance history, and the `plan_confirmed` handoff seam are now available for Milestone 3 consumption.
 - Milestone 3 planning is now active. This run refreshed the grocery task plan into an execution-ready queue and opened a dedicated progress ledger for implementation tracking.
 - GROC-01 is now complete. Grocery list/version/line persistence and schemas now carry the Milestone 3 lifecycle states, confirmation/idempotency seam, version traceability, incomplete-slot warning payloads, offset version references, and active/removed line fields needed before derivation/service work can start safely.
+- GROC-02 and GROC-04 are now complete. The backend now owns grocery derivation, durable draft/confirmed list persistence, stale-draft detection, and the household-scoped grocery router/mutation surface needed before frontend rewiring can proceed safely.
 - No new user interview was required for honest task breakdown: the grocery MVP decisions are already resolved in the approved feature spec and mirrored in `.squad/decisions.md`.
 
 ## 2. Discovery and alignment status
@@ -32,11 +33,11 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 | --- | --- | --- | --- | --- |
 | GROC-00 | Keep Milestone 3 progress ledger current | Scribe | in_progress | Ledger is now active and should be updated on every transition, blocker, and verification result. |
 | GROC-01 | Tighten grocery schema, lifecycle enums, and migration seams | Sulu | **done** | Completed 2026-03-08. Added household-backed grocery confirmation/idempotency seams, warning payload storage, version traceability fields, migration coverage, and updated model/schema regression tests. |
-| GROC-02 | Implement derivation engine and authoritative persistence | Scotty | **pending** | GROC-01 now complete; derivation can build from confirmed plans plus authoritative inventory. Ready now. |
-| GROC-03 | Implement refresh and stale-draft orchestration | Scotty | pending | Must preserve user adjustments/ad hoc lines and never mutate a confirmed list silently. Blocked by GROC-02. |
-| GROC-04 | Implement grocery API router and mutation contracts | Scotty | **pending** | No active grocery router exists yet in `apps/api/app/main.py`; this is the core backend activation step. GROC-01 complete; ready now. |
-| GROC-05 | Verify backend derivation and contract slice | McCoy | pending | Mandatory acceptance gate before frontend completion is treated as trustworthy. Blocked by GROC-02, GROC-04. |
-| GROC-06 | Rewire the web grocery client to the real API contracts | Uhura | pending | Current `grocery-api.ts` and `GroceryView.tsx` still reflect pre-spec placeholder states and assumptions. Blocked by GROC-04 API activation. |
+| GROC-02 | Implement derivation engine and authoritative persistence | Scotty | **done** | Completed 2026-03-08. Added SQL-backed derivation, conservative offsets, duplicate consolidation, version persistence, stale detection, and override/ad hoc carry-forward. |
+| GROC-03 | Implement refresh and stale-draft orchestration | Scotty | in_progress | Launched 2026-03-08T20:39:48Z. Must preserve user adjustments/ad hoc lines and never mutate a confirmed list silently. |
+| GROC-04 | Implement grocery API router and mutation contracts | Scotty | **done** | Completed 2026-03-08. Added derive/read/detail/re-derive/add-ad-hoc/adjust/remove/confirm endpoints with backend-owned session scope and household-scoped idempotent mutation receipts. |
+| GROC-05 | Verify backend derivation and contract slice | McCoy | pending | Mandatory acceptance gate before frontend completion is treated as trustworthy. Now unblocked; GROC-02 + GROC-04 complete. |
+| GROC-06 | Rewire the web grocery client to the real API contracts | Uhura | in_progress | Launched 2026-03-08T20:39:48Z. Update `grocery-api.ts` and `GroceryView.tsx` from pre-spec placeholder states to real backend contract.|
 | GROC-07 | Complete grocery review and confirmation UX | Uhura | pending | Mobile-readable review/confirm flow is part of the milestone, not cleanup work. Blocked by GROC-04 API activation. |
 | GROC-08 | Land confirmed-list handoff seams for trip mode and reconciliation | Scotty | pending | Must make list versions stable for downstream milestones without pulling those milestones forward. Blocked by GROC-07 confirmation. |
 | GROC-09 | Add grocery observability and deterministic fixtures | Scotty | pending | Derivation and stale behavior need diagnosable evidence from the start. Blocked by GROC-04, GROC-05. |
@@ -61,10 +62,10 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 
 ## 6. Current codebase watchpoints
 
-- `apps/api/app/models/grocery.py` already has list/version/item tables, but the lifecycle and line fields still need to be tightened to the approved Milestone 3 contract.
-- `apps/api/app/main.py` does **not** register a grocery router today; grocery remains an inactive slice even though planner and inventory are now active.
-- `apps/api/app/services/planner_service.py` already emits `plan_confirmed` events. Milestone 3 should treat that as the authoritative trigger instead of deriving from draft planner state.
-- `apps/web/app/_lib/grocery-api.ts` and `apps/web/app/grocery/_components/GroceryView.tsx` are valuable scaffolds, but they are not yet spec-aligned and should not be mistaken for completed Milestone 3 behavior.
+- `apps/api/app/services/grocery_service.py` now derives from confirmed plans plus authoritative inventory, but the temporary ingredient catalog seam still needs replacement by the real recipe/meal-definition store in a later slice.
+- `apps/api/app/main.py` now registers the grocery router; the remaining backend watchpoint is downstream alignment for refresh automation (GROC-03) and trip/reconciliation handoff seams (GROC-08/GROC-09).
+- `apps/api/app/services/planner_service.py` already emits `plan_confirmed` events. GROC-03 should consume that authoritative handoff instead of inventing a second planner trigger path.
+- `apps/web/app/_lib/grocery-api.ts` and `apps/web/app/grocery/_components/GroceryView.tsx` are still pre-spec placeholders and must be rewired to the real backend contract before UI completion claims are honest.
 
 ## 7. Baseline evidence for this planning refresh
 
@@ -92,7 +93,28 @@ Result: all five commands passed for this planning refresh. Web lint, typecheck,
   - `npm run test:worker`
 - Result: all six commands passed. API test suite passed (151 tests); API compileall passed; web lint/typecheck/build passed; worker tests passed (9/9).
 
-## 9. Planning exit criteria met
+## 9. GROC-02 / GROC-04 completion evidence
+
+- Added `apps/api/app/services/grocery_service.py`, a SQL-backed grocery derivation service that:
+  - derives only from confirmed meal plans,
+  - uses conservative exact-name + exact-unit inventory offsets,
+  - consolidates duplicate remaining needs by ingredient/unit,
+  - persists list versions plus incomplete-slot warnings,
+  - marks stale drafts when confirmed-plan or inventory snapshots drift,
+  - preserves ad hoc lines and user quantity overrides on re-derive,
+  - creates a new draft instead of mutating a confirmed list in place.
+- Added `apps/api/app/routers/grocery.py` and registered it in `apps/api/app/main.py`, activating the backend grocery slice with household-scoped endpoints for derive, current read, detail read, re-derive, add ad hoc, adjust line, remove line, and confirm list.
+- Expanded `apps/api/app/schemas/grocery.py` to expose current-version metadata, line collections, stale indicators, alias-friendly mutation commands, and replayable mutation envelopes.
+- Added backend regression coverage in `apps/api/tests/test_grocery.py` for confirmed-plan-only derivation, partial/full/no offset handling, duplicate consolidation, same-name different-unit separation, incomplete-slot warnings, stale-draft detection after inventory drift, ad hoc + override preservation on re-derive, confirmed-list stability, and household-scoped idempotent mutation receipts.
+- Expanded grocery schema coverage in `apps/api/tests/schemas/test_grocery_schemas.py` for derive-command aliases and mutation envelope parsing.
+- Validation after implementation:
+  - `cd apps\\api && python -m pytest tests`
+  - `cd apps\\api && python -m pytest tests\\test_grocery.py -q`
+  - `cd apps\\api && python -m pytest tests\\schemas\\test_grocery_schemas.py -q`
+  - `cd apps\\api && python -m compileall app tests migrations`
+- Result: all four commands passed. Full API suite passed, focused grocery API tests passed (7), grocery schema tests passed (12), and API compileall passed.
+
+## 10. Planning exit criteria met
 
 - `tasks.md` has been refreshed into an execution-ready Milestone 3 queue with dependencies, verification gates, and blocked cross-milestone follow-ons.
 - `progress.md` now exists for Milestone 3 tracking.
