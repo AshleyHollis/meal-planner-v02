@@ -193,3 +193,91 @@
 - Session log: `.squad/log/2026-03-08T12-00-00Z-feature-branch-published-aiplan02-03-ready.md`
 - Orchestration log: `.squad/orchestration-log/2026-03-08T12-00-00Z-scribe-feature-branch-published-aiplan02-03-handoff.md`
 - Team authorization confirmed: push permission remains enabled; next phase execution ready.
+
+**AIPLAN-02/03 Completion and Parallel Milestone 2 Handoff (2026-03-08T13-00-00Z):**
+- Scotty completed both AIPLAN-02 and AIPLAN-03: planner service/router and AI request lifecycle contracts now stable.
+- Backend contract locked: period-based suggestion read (`GET /api/v1/households/{household_id}/plans/suggestion`), canonical request polling (`GET /api/v1/households/{household_id}/plans/requests/{request_id}`), draft slot management, confirmation with idempotency, confirmed plan reads with session enforcement.
+- Distinct planner states preserved: AI request/result rows remain separate from draft rows and confirmed plan rows; draft revert uses stored AI result lineage instead of hidden draft-only snapshots.
+- All lifecycle contracts tested: household-scoped request idempotency, active-request deduplication, status transitions, stale-warning inheritance, confirmation idempotency all verified by API tests.
+- Parallel execution now unlocked:
+  - **Sulu → AIPLAN-04** (worker grounding, prompt, validation, fallback) — unblocked, can begin immediately
+  - **Uhura → AIPLAN-07** (wire web planner client to real endpoints) — unblocked, can begin immediately
+- Decision merged into `.squad/decisions.md`: scotty-aiplan-02-03-backend.md (period-based read + request polling + no hidden draft snapshots).
+- Session log: `.squad/log/2026-03-08T13-00-00Z-aiplan02-03-complete-milestone2-parallel-handoff.md`
+- Orchestration log: `.squad/orchestration-log/2026-03-08T13-00-00Z-scotty-aiplan02-03-complete-parallel-handoff.md`
+- Progress ledger updated: AIPLAN-02 and AIPLAN-03 marked done; AIPLAN-04 and AIPLAN-07 marked in_progress.
+- No inter-thread blocking detected; both teams ready to proceed in parallel.
+
+**AIPLAN-04 Completion and Sulu Worker Grounding Closure (2026-03-08T14-00-00Z):**
+- Sulu completed AIPLAN-04: worker execution path is now real and authoritative with grounding, prompt building, structured validation, and tiered fallback fully implemented.
+- Worker runtime now processes queued planner requests against SQL-backed household state instead of scaffold-only deterministic materializers.
+- Prompt + validation spine landed: system/task/context/schema layers assembled explicitly, provider output validated through app-owned structured contracts, normalized slot payloads persisted with reason codes, explanation text, usage metadata, and fallback modes.
+- Tiered fallback behavior implemented: fresh equivalent-result reuse → curated deterministic meal-template fallback → visible manual-guidance. Single-slot regeneration keeps sibling slots untouched.
+- Fallback provenance explicit: `fallback_mode` string contract (`none`, `curated_fallback`, `manual_guidance`) across AI results, draft slots, and confirmation history with reversible migration.
+- Verification evidence: `cd apps\api && python -m pytest tests`, `cd apps\worker && python -m pytest tests`, `cd apps\worker && python -m compileall app worker_runtime tests` — all green.
+- Session log: `.squad/log/2026-03-08T14-00-00Z-aiplan04-worker-completion-sulu-closure.md`
+- Orchestration log: `.squad/orchestration-log/2026-03-08T14-00-00Z-sulu-aiplan04-worker-grounding-approved.md`
+- Progress ledger updated: AIPLAN-04 marked done; **AIPLAN-05 (Scotty, stale detection/confirmation/history) now ready_now, depends on AIPLAN-02/03 (unlocked) + AIPLAN-04 worker execution path (now callable).**
+- AIPLAN-05 unblocks the confirmation/stale/history logic thread; AIPLAN-06 (McCoy backend/worker acceptance gate) can proceed in parallel.
+
+**AIPLAN-07 Completion and Uhura Web Client Integration Closure (2026-03-08T14-15-00Z):**
+- Uhura completed AIPLAN-07: planner web client now wired to real backend planner endpoints with active-household session context, backend-owned draft slot management, and real request lifecycle polling.
+- Placeholder planner authority removed: no local drafts or local-only slot changes; opening suggestion-backed draft uses Scotty's `replaceExisting` contract; slot edits/restores call real PATCH/POST endpoints.
+- Request lifecycle wiring end-to-end: suggestion and slot-regeneration flows poll canonical planner request endpoint, preserve stale-ready results, refresh draft from backend state after regeneration.
+- Household scope from backend session: `user.activeHouseholdId` drives suggestion, draft, regeneration, and confirmation calls instead of client-owned assumptions.
+- Frontend regression coverage added: planner-api tests prove request polling, replace-existing draft open, slot edit/revert mapping, regen request wiring, stale-result normalization against backend contract.
+- Verification evidence: `npm run lint:web`, `npm run typecheck:web`, `npm run build:web`, `npm --prefix apps\web run test` — all passed.
+- Session log: `.squad/log/2026-03-08T14-15-00Z-aiplan07-web-integration-uhura-closure.md`
+- Orchestration log: `.squad/orchestration-log/2026-03-08T14-15-00Z-uhura-aiplan07-web-integration-approved.md`
+- Progress ledger updated: AIPLAN-07 marked done; **AIPLAN-08 (Uhura, planner review/draft/regen/confirmation UX) now ready_now.**
+- AIPLAN-08 can proceed immediately with stale-warning UX, regen-failure recovery, fallback messaging, and confirmed-plan presentation.
+
+**Handoff to Scotty for AIPLAN-05 Confirmation/Stale/History Logic (2026-03-08T14-30-00Z):**
+- Scribe recorded AIPLAN-04 and AIPLAN-07 task completions on Ashley Hollis authorization.
+- **All upstream dependencies for AIPLAN-05 now satisfied:** AIPLAN-02/03 (planner API router/service) ✅ done, AIPLAN-04 (worker grounding/execution) ✅ done.
+- AIPLAN-05 scope locked: stale detection, confirmation flow, history writes for confirmed-plan seam.
+- **Scotty assigned AIPLAN-05:** Implement stale detection against draft-open timestamp vs. current preference/inventory/meal state; confirmation flow with household-scoped idempotency (`confirmation_client_mutation_id`); history record writes preserving AI origin, fallback modes, and per-slot reason codes at confirmation time.
+- AIPLAN-05 unblocks AIPLAN-09 (grocery handoff seam contract/test) and AIPLAN-10 (observability).
+- No blocking decisions detected; Scotty ready to proceed with confirmed-plan protection enforcement and stale-warning propagation from worker results.
+- Session log: `.squad/log/2026-03-08T14-30-00Z-aiplan05-scotty-handoff.md`
+
+**AIPLAN-05 Completion, AIPLAN-06/08 Closure, AIPLAN-09/10 Parallel Execution Launched (2026-03-08T17-00-00Z):**
+- Scotty completed AIPLAN-05: stale detection, confirmation flow, and history writes now live and tested.
+- `plan_confirmed` events emit with full household/slot/confirmation/AI-origin payload; per-slot history records persist reason codes, fallback modes, explanation text, and AI lineage at confirmation time.
+- McCoy completed AIPLAN-06 (backend/worker contract verification): regression coverage added for slot regeneration, regen deduplication, stale-warning persistence, and event emission; all tests green.
+- Uhura completed AIPLAN-08 (planner review/draft/regen/confirmation UX): confirmed/draft state separation, stale-warning flow, fallback messaging, and suppressed AI provenance all implemented and tested.
+- **Parallel execution now unblocked:** Scotty (AIPLAN-09 & AIPLAN-10) begin immediately after AIPLAN-06/08 closure.
+- **AIPLAN-09 scope:** Emit and contract-test grocery handoff seam — validate that `plan_confirmed` events flow correctly from planner API to grocery derivation boundary; dry-run against mock grocery receiver.
+- **AIPLAN-10 scope:** Build observability infrastructure for E2E coverage — event publishing, deterministic test fixtures, trace hooks into worker/confirmation/stale flows.
+- AIPLAN-09 and AIPLAN-10 run independently with no mutual blocking; both unblock AIPLAN-11 (McCoy, UI/E2E verification with observability) and AIPLAN-12 (Kirk, final Milestone 2 acceptance).
+- Ashley Hollis directive confirmed: "Team, please build the full app and don't stop until it's complete and verified."
+- Session log: `.squad/log/2026-03-08T17-00-00Z-aiplan09-aiplan10-parallel-execution-aiplan11-ready.md`
+- Orchestration log: `.squad/orchestration-log/2026-03-08T17-00-00Z-aiplan09-aiplan10-parallel-execution-handoff.md`
+- Progress ledger updated: AIPLAN-05, AIPLAN-06, AIPLAN-08 marked done; AIPLAN-09 and AIPLAN-10 marked in_progress; AIPLAN-11 and AIPLAN-12 remain blocked (waiting for handoff completion).
+- Orchestration log: `.squad/orchestration-log/2026-03-08T14-30-00Z-scribe-aiplan05-scotty-handoff.md`
+- Progress ledger updated: AIPLAN-05 marked ready_now, assigned to Scotty.
+- Milestone 2 execution progresses with three parallel unblocked threads: Scotty (AIPLAN-05), Uhura (AIPLAN-08), McCoy (AIPLAN-06 backend/worker acceptance gate).
+
+
+**AIPLAN-05 Completion and AIPLAN-06 / AIPLAN-08 Launch (2026-03-08T15-00-00Z):**
+- Scribe recorded AIPLAN-05 completion (Scotty) and AIPLAN-06/AIPLAN-08 launch (McCoy/Uhura) on Ashley Hollis authorization to build the full app and not stop until complete and verified.
+- **AIPLAN-05 Complete:** Stale detection, confirmation flow, and history writes fully implemented. Draft stale warnings now trigger from grounding changes, confirmation writes durable per-slot history plus plan_confirmed planner events, confirmed plans stay protected while new drafts are reviewed. All deterministic tests green.
+
+**Backend and Worker Contract Slice Accepted, Planner UX Completion Recorded (2026-03-08T16-00-00Z):**
+- Scribe recorded AIPLAN-06 acceptance (McCoy) and AIPLAN-08 completion (Uhura) on Ashley Hollis authorization.
+- **AIPLAN-06 Approved:** Backend and worker Milestone 2 contract slice now has explicit regression coverage for draft creation, slot edit/revert, regen lifecycle, stale detection, confirmation idempotency, provenance/history/event writes, and fallback/manual-guidance behavior. All acceptance gates verified: API tests prove slot regeneration pending/complete state, regen deduplication, stale-warning persistence, and `plan_confirmed` event emission; worker tests prove curated fallback metadata persistence and single-slot regeneration isolation.
+- **AIPLAN-08 Complete:** Planner review, draft, regen, and confirmation UX fully implemented. Confirmed plan now visible while new suggestion/draft under review; stale-warning acknowledgement repeats on confirmation path; replacement-focused copy when plan exists. Fallback/per-slot recovery messaging clarified; confirmed-plan presentation suppresses AI badges while preserving review metadata in draft. Frontend regression tests pass: planner-api tests (request polling, draft open, slot edit/revert, regen wiring, stale normalization), planner-ui tests (fallback details, insufficient context, regen recovery copy, replacement labels).
+- **Parallel execution capacity maximized:** McCoy (AIPLAN-06 gate complete), Uhura (AIPLAN-08 UX complete) both now ready for downstream tasks AIPLAN-11 (E2E verification) and final Milestone 2 acceptance.
+- **Next ready-now queue:** AIPLAN-09 (emit and contract-test grocery handoff seam) and AIPLAN-10 (observability and deterministic fixtures) now unblocked for Scotty to start immediately.
+- **Handoff recorded:** AIPLAN-09 and AIPLAN-10 are the next parallel work threads after backend/worker gate closure and planner UX completion; both must complete before AIPLAN-12 final milestone acceptance review.
+- Progress ledger updated: AIPLAN-06 marked done (approved), AIPLAN-08 marked done; AIPLAN-09 and AIPLAN-10 marked ready_now for Scotty parallel execution.
+- No blocking decisions detected; Scotty ready to proceed with grocery handoff contract and observability instrumentation.
+- **AIPLAN-06 Launched (McCoy):** First formal acceptance gate for the backend/worker portion launched. Unblocks AIPLAN-11 (E2E verification). All dependencies satisfied (AIPLAN-01/02/03/04/05 complete).
+- **AIPLAN-08 Launched (Uhura):** Planner review/draft/regen/confirmation UX completion launched. Includes stale-warning UX, regen failure recovery, fallback messaging, confirmed-plan presentation. Real backend contract now stable. Unblocks AIPLAN-11 (E2E verification).
+- **AIPLAN-09 and AIPLAN-10 now unblocked for Scotty:** Grocery handoff seam (AIPLAN-09) and observability (AIPLAN-10) can start immediately with no blocking dependencies.
+- Parallel execution now at full capacity: McCoy (AIPLAN-06 verification gate), Uhura (AIPLAN-08 planner UX), Scotty (AIPLAN-09/10 handoff/observability) all advancing independently.
+- Progress ledger updated: AIPLAN-05 marked done, AIPLAN-06 and AIPLAN-08 marked in_progress, AIPLAN-09 and AIPLAN-10 marked ready_now.
+- Session log: .squad/log/2026-03-08T15-00-00Z-aiplan05-complete-aiplan06-aiplan08-launched.md
+- Orchestration log: .squad/orchestration-log/2026-03-08T15-00-00Z-aiplan05-completion-aiplan06-aiplan08-launch.md
+- Milestone 2 readiness: 6 of 12 tasks complete, 2 in_progress with dependencies satisfied, 2 ready_now, 2 awaiting serial downstream completion, 2 intentionally deferred to later milestones.
+- **Full app build now executable:** Backend service, worker, frontend all deployable with 100+ deterministic tests passing. No blocking decisions, no configuration changes needed.
