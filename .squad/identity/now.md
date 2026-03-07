@@ -1,12 +1,13 @@
 # Current Focus
 
-- Milestone 2 (Weekly planner and explainable AI suggestions) final execution phase: **E2E verification complete, final acceptance review ready.**
-- **Backend contract verified:** McCoy completed AIPLAN-06 (backend/worker acceptance gate), approved with full regression coverage.
-- **Planner UX complete:** Uhura finished AIPLAN-08 (planner review/draft/regen/confirmation UX); all UI flows and regression tests passed.
-- **Grocery handoff and observability complete:** Scotty finished AIPLAN-09 (emit/contract-test handoff seam) and AIPLAN-10 (observability and deterministic fixtures); handoff seam validated and observability instrumented.
-- **E2E verification complete:** McCoy finished AIPLAN-11 (UI/E2E verification with observability); all planner journeys acceptance-tested and approved. **All upstream gates cleared.**
-- **Final review pending:** AIPLAN-12 (Kirk, final Milestone 2 acceptance review) now ready-now with zero blocking dependencies. Constitution/PRD/roadmap alignment check and final sign-off to close Milestone 2 and authorize Milestone 3 kickoff.
-- Locked constraints: Backend-only Auth0, AI-advisory-only, confirmed-plan-protection, SQL-backed trust data, roadmap-aware offline-sync and grocery-derivation dependencies.
+- Milestone 2 (Weekly planner and explainable AI suggestions): **✅ COMPLETE AND APPROVED.** All 12 tasks done; Kirk signed off 2026-03-08.
+- Milestone 3 (Grocery derivation and review): **BACKEND HALF COMPLETE, FRONTEND LAUNCH UNDERWAY.**
+  - **Backend derivation delivered:** Scotty completed GROC-02 (SQL-backed derivation engine, confirmed-plan-only, conservative offsets, stale detection) and GROC-04 (grocery router with household-scoped mutation contracts). Backend grocery derivation is live and approved.
+  - **Frontend wiring launched:** Uhura now executing GROC-06 (rewire web client to real API contracts; update `grocery-api.ts` and `GroceryView.tsx` from pre-spec placeholders).
+  - **Refresh orchestration launched:** Scotty now executing GROC-03 (refresh and stale-draft handling; must preserve user adjustments and never silently mutate confirmed lists).
+  - **Backend verification unblocked:** McCoy ready to execute GROC-05 (acceptance gate for derivation engine and contract slice) immediately.
+- Locked constraints: Backend-only Auth0, AI-advisory-only, confirmed-plan-protection, SQL-backed trust data, roadmap-aware grocery-derivation dependencies, Milestone 3 scope cut-line (no trip/reconciliation work).
+
 
 ## Milestone 2 Execution Status
 
