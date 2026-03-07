@@ -10,6 +10,7 @@
 | Inventory models, product mapping, store data flows | Sulu | Data design and pipelines |
 | Functional test completion, edge cases, acceptance behavior | McCoy | Testing and review (implementation verification) |
 | Design/accessibility/visual review (WCAG, responsive, contrast) | Kirk | Design acceptance gate; gated on spec requirements |
+| Git workflow review, commit discipline, merge gates | Kirk | Enforces binding directives at PR and merge gates |
 | Session logging, decisions merge, cross-agent updates | Scribe | Silent logging role |
 | Backlog scanning, issue/PR monitoring, keep-alive | Ralph | Continuous work monitor |
 
@@ -24,3 +25,25 @@
 - Specify mobile-first breakpoints and min/max viewport acceptance criteria
 - Specify responsive layout, keyboard navigation, and color contrast acceptance criteria
 - Identify any design-system or component-library dependencies before implementation starts
+
+## Git Workflow Discipline (Binding Directive)
+
+**Reference:** `.squad/decisions.md` (Git Workflow & Hygiene Directive section) and `.squad/skills/git-workflow`
+
+All contributors must follow:
+- **Commit Discipline:** One logical unit per commit; exclude all generated files
+- **Push Discipline:** Every commit pushed within the session it's created (max 3 unpushed)
+- **Squad File Discipline:** All `.squad/` files committed together, never left untracked
+- **Merge Strategy:** Rebase-before-merge; squash-and-merge to main via GitHub PR
+- **Line Endings:** `.gitattributes` enforces `eol=lf` on all source files
+
+**Kirk enforces at review gates:**
+- PR review: Verify commit discipline and message format
+- Merge gate: Full test suite green; feature branch rebased on main
+- Squad file merge: Kirk manually resolves any true conflicts (union merge)
+
+**Escalation paths:**
+- Branch diverges >50 commits from main → Kirk decomposes into merge windows
+- Line-ending violations at CI → Reject PR; require local reset and re-push
+- Tracked artifact discovered after merge → Kirk branches back and removes (fast-forward main)
+
