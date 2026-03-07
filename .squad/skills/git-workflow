@@ -1,0 +1,77 @@
+# Git Workflow Skill
+
+## Binding Directives
+
+### Commit Discipline
+- One logical unit per commit (one feature, one bug fix, one decision)
+- Never mix unrelated changes in a single commit
+- Exclude all generated files: `bin/`, `obj/`, `.next/`, `dist/`, `*.egg-info`, `.next-dev/`, `.playwright-artifacts/`
+- Exclude temp outputs: `.pytest_cache/`, `__pycache__/`, `*.pyc`, `.tsbuildinfo`
+
+### Commit Message Format
+```
+[SCOPE]: Brief one-line summary
+
+- Detailed explanation of what changed
+- Each change on its own line
+- Link to decision/spec/task ID if applicable
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+```
+
+### Pre-Commit Verification
+```bash
+git status  # Verify no build artifacts are staged
+git diff --cached  # Review all staged changes
+```
+
+### Push Discipline
+- **Every commit must be pushed within the session it's created**
+- Never accumulate more than 3 unpushed commits
+- Push at natural break points: after spec approval, after tests pass, after decision merge
+- Push immediately: `git push origin <feature-branch>`
+
+### Handling Feature Branches
+```bash
+# If origin is ahead of your feature branch:
+git fetch origin
+git rebase origin/main
+git push origin --force-with-lease <feature-branch>
+
+# Never use merge, always rebase
+```
+
+### Merging to Main
+- **Run full test/lint/typecheck suite before merge:**
+  ```bash
+  npm run build:web && npm run test:api && npm run test:worker && npm run lint:web && npm run typecheck:web
+  ```
+- **Rebase to main:**
+  ```bash
+  git rebase origin/main
+  git push origin --force-with-lease <feature-branch>
+  ```
+- **Merge strategy:** Squash-and-merge via GitHub PR (never manual merge commit)
+- **Backup branch before delete:** `git tag feature/<name>-backup <sha>`
+
+### Squad File Discipline
+- All `.squad/` files must be committed together in atomic batch
+- Commit pattern: `docs: [describe what the decision/log records]`
+- Never leave `.squad/` files untracked for more than one session
+- Append-only files use union merge strategy (configured in `.gitattributes`)
+
+### Line Ending Safety
+- Config: `git config core.safecrlf true` (prevents CRLF leaks)
+- `.gitattributes` enforces `eol=lf` on all source files
+- Run `git diff --check` before committing to catch whitespace issues
+
+## When to Escalate
+- Branch diverges >50 commits from main → Kirk decomposes into smaller merge windows
+- Merge conflict on `.squad/` file → Kirk manually resolves (union merge catches append-only issues)
+- Tracked artifact discovered after merge → Kirk branches back and removes (fast-forward main)
+- Line-ending violations at CI → Reject PR; require local reset and re-push
+
+## References
+- Directive: `.squad/decisions/inbox/kirk-git-hygiene-directive.md`
+- Append-only merge config: `.gitattributes`
+- Line ending enforcement: `.gitattributes` (eol=lf)
