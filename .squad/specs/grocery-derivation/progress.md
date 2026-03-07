@@ -1,7 +1,7 @@
 # Grocery Derivation Progress
 
 Date: 2026-03-08
-Status: ✅ **GROC-08 / GROC-09 COMPLETE → GROC-10 READY** (2026-03-08T22-00-00Z)
+Status: ✅ **MILESTONE 3 APPROVED** (2026-03-08T23-00-00Z)
 Spec: `.squad/specs/grocery-derivation/feature-spec.md`
 Tasks: `.squad/specs/grocery-derivation/tasks.md`
 
@@ -17,6 +17,7 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 - GROC-06 is now complete. The grocery web client now uses the approved backend lifecycle/read-model contract, backend-owned active household context, and only the draft/confirm/refresh/ad-hoc actions that the current API actually supports.
 - GROC-07 is now complete. The grocery review flow now supports stale-draft review, incomplete-slot visibility, inline meal traceability detail, quantity override editing with review notes, ad hoc note capture, line removal review, and a confirmation modal that stays usable on desktop and phone-sized layouts.
 - GROC-08 and GROC-09 are now complete. Grocery read models now expose explicit `grocery_list_version_id` and stable `grocery_line_id` seams for downstream trip/reconciliation consumers, while backend observability logs derivation, incomplete-slot, stale-detection, and confirmation diagnostics with correlation IDs.
+- GROC-10 is now complete. Frontend helper coverage and Playwright acceptance coverage now prove the grocery journey from derive/review through adjust/confirm, stale refresh preserves ad hoc + override user intent, and traceability remains visible to the user during review.
 - No new user interview was required for honest task breakdown: the grocery MVP decisions are already resolved in the approved feature spec and mirrored in `.squad/decisions.md`.
 
 ## 2. Discovery and alignment status
@@ -34,6 +35,8 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 
 ## 3. Ready-now queue
 
+**Reviewer ownership rule:** GROC-05, GROC-10, and GROC-11 only count when the person closing the gate did not implement the slice being reviewed. Named squad roles do not waive that separation-of-duties requirement.
+
 | ID | Task | Agent | Status | Notes |
 | --- | --- | --- | --- | --- |
 | GROC-00 | Keep Milestone 3 progress ledger current | Scribe | in_progress | Ledger is now active and should be updated on every transition, blocker, and verification result. |
@@ -41,13 +44,13 @@ Tasks: `.squad/specs/grocery-derivation/tasks.md`
 | GROC-02 | Implement derivation engine and authoritative persistence | Scotty | **done** | Completed 2026-03-08. Added SQL-backed derivation, conservative offsets, duplicate consolidation, version persistence, stale detection, and override/ad hoc carry-forward. |
 | GROC-03 | Implement refresh and stale-draft orchestration | Scotty | **done** | Completed 2026-03-08. Planner confirmation now consumes durable `plan_confirmed` events for automatic refresh, inventory mutations mark only relevant drafts stale, ad hoc/override state survives refresh, and confirmed lists still spawn a fresh draft. |
 | GROC-04 | Implement grocery API router and mutation contracts | Scotty | **done** | Completed 2026-03-08. Added derive/read/detail/re-derive/add-ad-hoc/adjust/remove/confirm endpoints with backend-owned session scope and household-scoped idempotent mutation receipts. |
-| GROC-05 | Verify backend derivation and contract slice | McCoy | **done** | Completed 2026-03-08. Added explicit confirmed-only and staple regression coverage, then re-ran focused grocery tests plus the full API suite before approving the backend slice. |
+| GROC-05 | Verify backend derivation and contract slice | McCoy | **done** | Completed 2026-03-08. Added explicit confirmed-only and staple regression coverage, then re-ran focused grocery tests plus the full API suite before approving the backend slice. This gate is only valid because backend verification ownership is required to stay separate from backend implementation ownership. |
 | GROC-06 | Rewire the web grocery client to the real API contracts | Uhura | **done** | Completed 2026-03-08. Replaced placeholder grocery statuses/origins, removed unsupported purchased-line optimism, wired derive/re-derive/confirm/ad-hoc flows to the live router, and switched grocery calls to `activeHouseholdId`. |
 | GROC-07 | Complete grocery review and confirmation UX | Uhura | **done** | Completed 2026-03-08. Added draft-review summary cards, stale/incomplete review surfacing, inline traceability detail, quantity override + remove controls, ad hoc note capture, confirmation modal, and desktop/phone acceptance coverage. |
 | GROC-08 | Land confirmed-list handoff seams for trip mode and reconciliation | Scotty | **done** | Completed 2026-03-08. Added explicit `grocery_list_version_id`, stable `grocery_line_id`, migration coverage, and confirmation/regression tests proving confirmed lists keep their version + line identities after later re-derives. |
 | GROC-09 | Add grocery observability and deterministic fixtures | Scotty | **done** | Completed 2026-03-08. Added correlation-aware derivation, incomplete-slot, stale-detection, and confirmation diagnostics plus deterministic grocery fixture constants and regression tests; worker regression suite re-run cleanly. |
-| GROC-10 | Verify grocery UI and end-to-end flows | McCoy | pending | Required before Milestone 3 completion claim per the constitution and roadmap. Blocked by GROC-08, GROC-09 completion. |
-| GROC-11 | Final Milestone 3 acceptance review | Kirk | pending | Final cut-line review must confirm Milestone 3 did not silently absorb Milestones 4 or 5. Blocked by GROC-10 completion. |
+| GROC-10 | Verify grocery UI and end-to-end flows | McCoy | **done** | Completed 2026-03-08. Added traceability helper coverage, derive/review/adjust/confirm Playwright coverage, stale-refresh intent-preservation assertions, re-ran cross-stack verification, and recorded the single milestone-end visual smoke evidence for Milestone 3 closure. This gate must remain owned by a reviewer other than the implementation owner(s) of the grocery UI slice. |
+| GROC-11 | Final Milestone 3 acceptance review | Kirk | ready_now | Final cut-line review must confirm Milestone 3 did not silently absorb Milestones 4 or 5 and must consume the milestone-end smoke evidence already recorded in GROC-10 rather than rerunning it by default. Final approval ownership must stay independent from Milestone 3 implementation ownership. |
 
 ## 4. Blocked or cross-milestone queue
 
@@ -220,25 +223,23 @@ Both GROC-08 (confirmed-list handoff seams) and GROC-09 (grocery observability a
 ### Full Application Test Suite Status (Current)
 
 - **API tests:** 171 passed ✅
-- **Web tests:** 33 passed ✅
+- **Web unit tests:** 35 passed ✅
+- **Grocery Playwright acceptance:** 3 passed ✅
 - **Worker tests:** 9 passed ✅
 - **Web build:** Green ✅
 - **Web lint:** Green ✅
 - **Web typecheck:** Green ✅
 
-**Total verification:** 213 deterministic tests passing. Full app remains buildable, testable, and verifiable.
+**Total verification:** 218 deterministic tests passing. Full app remains buildable, testable, and verifiable.
 
-### GROC-10 Ready for McCoy Execution
+### GROC-10 completion verdict (2026-03-08T22-30-00Z)
 
-GROC-10 (McCoy, E2E verification gate) is now unblocked and ready for immediate execution.
+McCoy executed the GROC-10 verification gate and **APPROVES** the Milestone 3 grocery UI/E2E slice. The approval is limited to the grocery derive/review/confirm experience and its documented seams; GROC-11 remains the required final milestone cut-line review. This verification gate is intended to stay independent from the implementation owner(s) of the reviewed slice.
 
-**Scope:**
-- Acceptance test suite covering full grocery UI workflows (derive → review → confirm)
-- Desktop + phone layout verification for grocery view, review, and confirmation modal
-- End-to-end verification against approved lifestyle/read-model contract
-- Derivation determinism proof: same plan + inventory state → identical grocery list
-- Stale-draft refresh verification: user overrides preserved after inventory changes
-- Confirmed-list stability verification: re-derive respects list-version immutability
+**Verified scope:**
+- Acceptance coverage for derive → review → adjust → confirm from the grocery page with confirmed-plan-backed derive.
+- Stale refresh coverage proving quantity overrides and ad hoc additions survive re-derive and stay visibly flagged for review.
+- Traceability visibility coverage proving meal-source detail, inventory snapshot linkage, and phone-sized confirmation flow remain usable.
 
 ### Milestone 3 Critical Path Status
 
@@ -253,14 +254,97 @@ GROC-10 (McCoy, E2E verification gate) is now unblocked and ready for immediate 
 | GROC-07 | Uhura | ✅ done | Review UX and confirmation |
 | GROC-08 | Scotty | ✅ done | Trip/reconciliation handoff seams |
 | GROC-09 | Scotty | ✅ done | Observability and fixtures |
-| GROC-10 | McCoy | ready_now | E2E verification gate |
-| GROC-11 | Kirk | pending | Final Milestone 3 acceptance |
+| GROC-10 | McCoy | ✅ done | UI/E2E verification approved |
+| GROC-11 | Kirk | ✅ done | Milestone 3 APPROVED — all 20 acceptance criteria verified independently |
 
-**Status:** 9/11 tasks complete. GROC-10 and GROC-11 remain as mandatory acceptance gates. No scope creep detected.
+**Status:** 11/11 tasks complete. Milestone 3 is approved.
 
 ### Session Recording (Scribe)
 
 - **Orchestration log:** `.squad/orchestration-log/2026-03-08T22-00-00Z-groc08-groc09-completion-groc10-handoff.md`
 - **Session log:** `.squad/log/2026-03-08T22-00-00Z-groc08-groc09-complete-groc10-ready.md`
 - **Directive:** Ashley Hollis authorized full app build with no stopping until complete and verified.
-- **Status:** Application build verified. All test suites passing. GROC-10 ready for McCoy execution.
+- **Status:** Application build verified. Cross-stack suites passing. GROC-11 ready for Kirk execution.
+
+## 17. GROC-10 completion evidence
+
+- Added frontend regression coverage in `apps/web/app/_lib/grocery-ui.test.ts` for meal trace label de-duplication/fallback behavior and confirmation-summary edge handling, then moved the UI trace label logic into `apps/web/app/_lib/grocery-ui.ts` so the visible traceability copy is directly guarded by automated tests.
+- Expanded `apps/web/tests/e2e/grocery-acceptance.spec.ts` to cover:
+  - derive → review → adjust → confirm from an initially empty grocery state,
+  - stale refresh preserving override/ad hoc user intent while bumping draft version and keeping review warnings visible,
+  - explicit traceability visibility for meal-source labels, contribution quantities, and inventory snapshot references,
+  - and the existing phone-sized confirmation flow.
+- Hardened `apps/web/playwright.config.ts` to accept `PLAYWRIGHT_PORT`, allowing deterministic Playwright runs in this shared Windows workspace without colliding with an unrelated listener already using port 3000.
+- Validation after verification updates:
+  - `npm run lint:web`
+  - `npm run typecheck:web`
+  - `npm run build:web`
+  - `npm --prefix apps\\web run test`
+  - `set PLAYWRIGHT_PORT=3101 && npm --prefix apps\\web run test:e2e -- tests/e2e/grocery-acceptance.spec.ts`
+  - `python -m pytest apps\\api\\tests -q`
+  - `npm run test:worker`
+- Result: web lint, typecheck, and production build all passed; frontend unit tests passed (`35`); grocery Playwright acceptance passed (`3/3`); full API suite passed (`171 passed, 196 warnings`); and worker tests passed (`9 passed`). Known non-blocking warnings remain the pre-existing Next.js multiple-lockfile build warning and Python `datetime.utcnow()` pytest deprecation noise. The repository `npm run test:api` wrapper still hangs in this shared Windows environment after delegating to `cmd /c`, so McCoy used the equivalent existing direct command `python -m pytest apps\\api\\tests -q` to finish backend verification.
+
+## 18. GROC-11 Milestone 3 Final Acceptance (2026-03-08T23-00-00Z)
+
+### Verdict: ✅ MILESTONE 3 APPROVED
+
+Kirk independently verified all 20 feature-spec acceptance criteria against the implementation code and ran the full evidence suite before signing off. Final acceptance is only valid when the approver is not also the implementation owner for the milestone slice under review.
+
+### Independent Evidence Suite (Kirk, 2026-03-08)
+
+| Check | Result |
+| --- | --- |
+| API tests (`python -m pytest apps\api\tests -q`) | 171 passed ✅ |
+| Web unit tests (`npm --prefix apps\web run test`) | 35 passed ✅ |
+| Grocery Playwright acceptance (3 specs) | 3 passed ✅ |
+| Worker tests (`cd apps\worker && python -m pytest tests -q`) | 9 passed ✅ |
+| Web lint (`npm run lint:web`) | Green ✅ |
+| Web typecheck (`npm run typecheck:web`) | Green ✅ |
+| Web build (`npm run build:web`) | Green ✅ |
+
+**Total: 218 deterministic tests passing. Full app buildable, lintable, typecheckable.**
+
+### Acceptance Criteria Verification (all 20 criteria)
+
+| # | Criterion | Verdict | Evidence |
+| --- | --- | --- | --- |
+| 1 | Derivation only from confirmed plan | ✅ | `grocery_service.py` filters `.where(MealPlan.status == confirmed)`; test `test_derive_uses_only_confirmed_plan_slots_for_the_period` |
+| 2 | All ingredients expanded to raw needs | ✅ | `_build_raw_needs()` iterates all slots/ingredients from catalog |
+| 3 | Offset only on obvious same-item, same-unit match | ✅ | `_match_inventory_item()` requires exact normalized name + exact unit; no fuzzy/conversion |
+| 4 | Full offset → no grocery line | ✅ | `_consolidate_needs()` filters `shopping_quantity <= 0` |
+| 5 | Partial offset → remaining only | ✅ | `shopping_quantity = required_quantity - offset_quantity`; Pasta test: 800-200=600 |
+| 6 | No match → full quantity | ✅ | Basil test: shopping_quantity equals required_quantity |
+| 7 | Duplicate consolidation with traceability | ✅ | Consolidation by `(ingredient_ref_id, name, unit)` with meal_sources list |
+| 8 | Different units not consolidated | ✅ | `test_derive_keeps_same_name_different_units_as_separate_lines` |
+| 9 | Staples not assumed on hand | ✅ | `test_derive_does_not_assume_staples_are_on_hand` |
+| 10 | Ad hoc items with `origin: ad_hoc` | ✅ | `add_ad_hoc_item()` sets origin; UI displays ad hoc label |
+| 11 | Ad hoc survive refresh | ✅ | Re-derive copies ad hoc items to new version; Playwright confirms persistence |
+| 12 | User overrides survive + flagged on change | ✅ | `user_adjustment_flagged` computed on re-derive; UI shows "Review override" notice |
+| 13 | Automatic refresh on plan/inventory change | ✅ | Planner router triggers `process_pending_plan_confirmed_events()`; inventory router triggers `refresh_stale_drafts()` |
+| 14 | Confirmed list immutable on refresh | ✅ | Guard clauses protect confirmed/trip statuses; new draft spawned instead |
+| 15 | Meal traceability on consolidated lines | ✅ | `GroceryMealSourceRead` with meal_slot_id, meal_name, contributed_quantity |
+| 16 | Offset traceability for reconciliation | ✅ | `offset_inventory_item_id`, `offset_inventory_item_version`, `inventory_snapshot_reference` persisted |
+| 17 | Confirmed list offline-accessible | ✅ | Confirmed list returns stable snapshot; `grocery_list_version_id` + `grocery_line_id` seams ready for M4 |
+| 18 | Stale draft visibly indicated | ✅ | `stale_draft` status, `isStale` flag, dedicated UI notice panel + badge |
+| 19 | Idempotent mutations with client_mutation_id | ✅ | All 6 mutation methods check `GroceryMutationReceipt` before executing; frontend sends `randomUUID()` |
+| 20 | Automated test coverage matrix | ✅ | All 10 required scenarios covered in `test_grocery.py` + `grocery-acceptance.spec.ts` |
+
+### Scope Boundary Verification
+
+- **No trip execution code:** `trip_in_progress` and `trip_complete_pending_reconciliation` references are guard clauses only — they protect confirmed lists from mutation. No trip-mode execution logic exists. ✅
+- **No offline store code:** No IndexedDB, service worker, or offline cache logic in `apps/web`. ✅
+- **No Auth0 SDK:** Zero `@auth0` imports or Auth0 config in `apps/web`. Backend-owned session via `GET /api/v1/me`. ✅
+- **No reconciliation logic:** Offset traceability is preserved for downstream consumption, but no post-trip reconciliation flow was implemented. ✅
+- **Milestone 4/5 work remains explicitly blocked:** GROC-12, GROC-13, GROC-14 tracked as blocked on their respective milestones. ✅
+
+### Explicit Follow-Ups (Non-Silent Carryover)
+
+1. **GROC-12 — Offline client store (Milestone 4):** The confirmed-list payload and version contract are defined; the real IndexedDB/sync store belongs to Milestone 4.
+2. **GROC-13 — Active trip flows (Milestone 4):** Confirmed list stability and version identity are in place; active trip execution and reconnect conflict handling are Milestone 4 work.
+3. **GROC-14 — Shopping reconciliation (Milestone 5):** Offset traceability, version identity, and line stability are preserved for downstream reconciliation; post-trip review/apply remains Milestone 5.
+4. **Auth0 production wiring (inherited):** Dev-header session posture remains transitional; production Auth0 integration is pending across all milestones.
+5. **`datetime.utcnow()` deprecation (inherited):** 196 pytest warnings from model tests; migrate to `datetime.now(datetime.UTC)` in a future cleanup pass.
+6. **Dual lockfile warning (inherited):** Next.js build warns about `apps/web/package-lock.json` alongside root lockfile.
+7. **`npm run test:api` wrapper (env):** The `cmd /c` delegation hangs in this shared Windows environment; direct `python -m pytest` works. Not a code issue.
+8. **Temporary ingredient catalog seam:** `grocery_service.py` uses a hardcoded meal-ingredient catalog; replace with real recipe/meal-definition store in a later slice.

@@ -2,7 +2,7 @@
 
 Date: 2026-03-07
 Requested by: Ashley Hollis
-Status: Draft for approval
+Status: Approved
 Depends on:
 - `.squad/specs/inventory-foundation/feature-spec.md`
 - Milestone 3 grocery/list confirmation contracts
