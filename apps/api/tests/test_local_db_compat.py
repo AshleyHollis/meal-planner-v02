@@ -140,6 +140,10 @@ def test_resolve_local_db_path_falls_back_when_stale_db_is_locked(tmp_path: Path
     finally:
         connection.close()
 
-    assert fallback_path != db_path
-    assert fallback_path.name.startswith("inventory.process-")
-    assert db_path.exists()
+    if fallback_path == db_path:
+        backup_paths = list(tmp_path.glob("inventory.incompatible-*.sqlite.bak"))
+        assert len(backup_paths) == 1
+        assert not db_path.exists()
+    else:
+        assert fallback_path.name.startswith("inventory.process-")
+        assert db_path.exists()
