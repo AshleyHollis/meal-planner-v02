@@ -1,0 +1,54 @@
+# Spec History
+
+## Project Context
+- **User:** Ashley Hollis
+- **Project:** AI-Assisted Household Meal Planner
+- **Stack:** REST API, modern web UI, AI assistance, inventory/product mapping workflows
+- **Description:** Build a connected household meal planning platform spanning inventory, meal plans, substitutions, store mapping, shopping trips, and inventory updates after shopping or cooking.
+- **Team casting:** Star Trek TOS first.
+
+## Learnings
+- Manual visual smoke testing is a milestone-end completion gate, not a per-sub-step ritual: run it once in the milestone's final user-journey verification step, then have final acceptance consume that recorded evidence instead of rerunning it by default.
+- Ashley's directive (2026-03-07) locks Auth0 integration to the backend API only. The Next.js frontend on Azure Static Web Apps must never install the Auth0 Next.js SDK — it breaks SWA startup. This is now an explicit architectural constraint across all planning docs.
+- The frontend authentication path is: call API session bootstrap endpoints (e.g. `GET /api/v1/me`); the API handles OIDC, JWT validation, and session state. No Auth0 SDK, no Auth0 env vars in the web deployment unit.
+- All affected planning docs were updated in a single Spec pass: architecture overview, frontend-offline-sync, api-worker-architecture, deployment-environments, testing-quality, and roadmap. Decision recorded at `.squad/decisions/inbox/spec-backend-auth0-api-only.md`.
+- Current focus is spec-first setup for the AI-assisted household meal planning platform.
+- Key squad context files for constitution setup are `.squad/team.md`, `.squad/decisions.md`, `.squad/identity/now.md`, and `.squad/agents/spec/history.md`.
+- Existing team decisions require a constitution interview before implementation and keep the specification role explicitly named `Spec`.
+- Constitution setup was initially blocked by the unavailable interactive `ask_user` step, but the provided interview results were sufficient to complete `.squad/project/constitution.md` in this session.
+- Ashley already approved the default technical direction for this project: Next.js frontend, Python 3.13 FastAPI backend, Python workers using queues, Aspire-first local development, Azure preview/prod deployment, GitHub CI/CD, and E2E-first verification before deployment.
+- The meal planner constitution now treats mobile shopping, offline support, shared-household coordination, explainable AI, inventory accuracy, and food-waste reduction as first-class project rules.
+- The constitution intentionally leaves database, auth/household identity, offline sync implementation, and queue technology as explicit open questions to resolve in downstream architecture/spec work instead of inventing them prematurely.
+- The first project PRD is now drafted at `.squad/project/prd.md` and keeps MVP scope centered on shared inventory, weekly meal planning, grocery/trip workflow, and post-shopping/post-cooking inventory updates.
+- The PRD explicitly keeps store-specific product mapping, rich multi-person collaboration, and advanced AI beyond editable weekly plan suggestions out of MVP.
+- Downstream architecture and feature specs still need to resolve database choice, auth/household identity, offline sync design, queue technology, recipe/ingredient modeling, expiry precision, and inventory reconciliation UX.
+- The first architecture draft now exists as split-by-concern documents under `.squad/project/architecture/` covering system overview, frontend/offline sync, API/workers, data boundaries, deployment environments, and testing/quality.
+- Ashley's approved defaults are now carried into architecture as concrete working assumptions: Next.js PWA-style web client, IndexedDB-class local offline storage plus sync queue, FastAPI API, Python workers on Azure Storage Queues, Aspire local orchestration, SQL Server locally, Azure SQL Serverless in cloud, AKS for API/workers, Azure Static Web Apps for frontend, and Auth0-backed identity.
+- The architecture preserves a strict boundary between non-authoritative client offline state and authoritative SQL-backed household state, with intent-based sync, idempotent mutation replay, and user-visible conflict handling as core design rules.
+- The architecture intentionally leaves several items open for downstream feature specs instead of inventing them: exact offline client libraries, AI provider details, recipe/ingredient normalization depth, exact household role granularity, exact AKS packaging/IaC choices, and detailed conflict UX.
+- Ashley revised the architecture direction to make Terraform the IaC standard and to require an explicit ownership split between `C:\Users\ashle\Source\GitHub\AshleyHollis\shared-infra` and `meal-planner-v02`.
+- The architecture docs now distinguish shared platform ownership in `shared-infra` (shared Azure/Kubernetes primitives, OIDC/federated identity plumbing, shared workflows, cluster-level components) from app ownership in this repo (app Terraform, Kubernetes overlays, ArgoCD app definitions, and deployment workflows).
+- Azure Key Vault is now documented as the secret source of truth for preview, production, and local development, with local development preferring Azure-authenticated access and allowing only a disposable bootstrap cache outside the repo.
+- The revised deployment direction explicitly calls out likely `shared-infra` updates for meal-planner-v02 around federated credentials, workload identity, External Secrets support, and reusable Terraform module/versioning patterns.
+- Preview architecture is now explicitly per-PR and fully automated end-to-end rather than branch-shared.
+- Each PR preview is now documented to isolate its Azure Static Web Apps preview environment, AKS namespace, ArgoCD app/overlay, DNS hostname, and for meal-planner a per-PR Azure SQL database plus Key Vault secret material.
+- The docs now record that shared-infra owns Gateway API, ExternalDNS-to-Cloudflare DNS automation, cert-manager, and the shared wildcard TLS posture, while this repo owns app-specific preview overlays, ArgoCD definitions, database wiring, and cleanup triggers.
+- The deployment architecture now treats the Azure Static Web Apps limit of three concurrent previews as a real architectural constraint and requires both PR-close cleanup and scheduled orphan sweeps patterned after `yt-summarizer`.
+- The first roadmap now exists at `.squad/project/roadmap.md` and keeps MVP sequencing centered on the approved closed loop: household/inventory foundation, weekly planning, grocery review, mobile/offline trip execution, and post-action reconciliation.
+- The roadmap explicitly treats repo scaffolding, preview/CI wiring, auth/session bootstrap, and test harness setup as MVP-enabling Milestone 0 work rather than post-feature polish.
+- Mobile/offline trip mode is intentionally sequenced after grocery review and sync-contract foundations so the team builds offline behavior on top of confirmed authoritative list state rather than unstable planning drafts.
+- Phase 2 remains separated in roadmap planning and preserves store-aware shopping, richer collaboration, deeper recipe/nutrition systems, and more advanced AI as follow-on work instead of MVP scope.
+- The inventory foundation spec is now drafted at `.squad/specs/inventory-foundation/feature-spec.md` with a paired `.squad/specs/inventory-foundation/tasks.md` breakdown for implementation sequencing.
+- Ashley's discovery inputs resolved the MVP inventory model toward explicit adjustment events behind hybrid CRUD-style editing, mandatory idempotent mutation receipts, append-only compensating corrections, and a single-primary-unit rule per inventory item.
+- Freshness is now specified as a hybrid basis model: `known`, `estimated`, or `unknown`, with downstream consumers required to preserve the basis label rather than treating all dates as equally authoritative.
+- The offline sync conflicts spec is now drafted at `.squad/specs/offline-sync-conflicts/` to define detection, classification, auto-merge limits, review-required conflicts, retry/replay rules, and implementation sequencing for Milestone 4.
+- Ashley's conflict-resolution discovery locked the MVP posture toward conservative conflict safety: if the app cannot prove a local stale change merges safely with newer server state, automatic sync must stop and require explicit user review.
+- MVP auto-merge is intentionally narrow for offline conflicts: duplicate retries and clearly non-overlapping updates may auto-merge, while quantity conflicts, item deletion/archive conflicts, and freshness/location conflicts always require review.
+- The intended MVP conflict review choices are now explicit: users can keep their local intent, accept server state, or inspect detailed before/base/server differences before deciding.
+- Reconciliation planning is now split into dedicated shopping and cooking feature specs so each flow can define its own review/apply contract, inventory handoff, and acceptance criteria without overloading one artifact.
+- Ashley's reconciliation discovery locked the MVP boundary that trip progress and cooking context do not directly mutate inventory; both flows require explicit post-action review/apply confirmation before authoritative stock changes commit.
+- MVP reconciliation detail is intentionally lightweight: shopping confirms bought, skipped, reduced, and ad hoc purchases; cooking confirms used, skipped, substitute/ad hoc ingredients, and leftovers created; neither flow requires variance reasons.
+- Later mistakes discovered after shopping or cooking apply are now planned to use separate compensating correction flows linked back to the original reconciliation and inventory events instead of rewriting earlier history.
+- The approved Wave 1 codebase already contains explicit inventory mutation/history routes, a basic web inventory flow, and a backend-owned `/api/v1/me` seam, but the session contract is still stubbed and inventory persistence is still in-memory.
+- The new execution-ready inventory-foundation task plan now treats authenticated household context plus SQL-backed authoritative inventory persistence as the smallest trustworthy next Milestone 1 wave; broader inventory edit/history UX is intentionally sequenced after that foundation lands.
+- Inventory foundation tracking artifacts now include `.squad/specs/inventory-foundation/progress.md` and the planning decision record `.squad/decisions/inbox/spec-inventory-foundation-tasks.md` so the team can route work without re-deriving the cut line.
