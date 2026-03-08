@@ -147,3 +147,31 @@
 - Decision recorded at `.squad/decisions/inbox/kirk-groc-11-milestone-review.md`.
 - Running the evidence suite independently before signing off continues to prove essential — this is now the third consecutive milestone where progress ledger claims alone would have been insufficient for a gate decision.
 - Milestone 3 completion means Milestone 4 (Trip Execution + Offline Sync) and Milestone 5 (Shopping Reconciliation) can safely build on the confirmed-list handoff contract without placeholder dependencies.
+
+## Systematic Squad State Cleanup Audit (2026-03-09T14-30-00Z)
+
+- **Task:** Perform systematic cleanup audit focused on stale/inconsistent squad state, determine which progress/identity/decision/log files are out of date, identify consolidation/archival opportunities, and provide exact file-edit cleanup list.
+- **Audit scope:** Decisions framework consistency, log directory completeness, agent history recency, inherited technical debt inventory, orchestration logs, identity/now.md alignment.
+- **Key finding:** No critical blocking issues identified. Prior audit (2026-03-09T14-00-00Z, kirk-squad-directory-audit.md) correctly resolved consolidated/ directory duplication. Current state reflects solid execution discipline with append-only logs, clean inbox processing, canonical decisions.md.
+- **Decisions framework status:** ✅ Clean. Canonical decisions.md (878 lines) actively maintained, inbox now contains only 1 file (prior audit decision), no subdirectories in decisions/.
+- **Log directory status:** ✅ Healthy. 75 chronologically-named logs, clear naming convention, no stale entries. Recent 2026-03-09 logs need staging.
+- **Orchestration logs:** ✅ Clean. 58 chronological records through SYNC-08 (2026-03-09T05-00-00Z), no stale entries.
+- **Agent histories timing:** ⚠️ Should be updated. Kirk/McCoy/Scribe current through Milestone 3/early M4. Scotty/Uhura/Sulu logs end at Milestone 2/3; SYNC-01–SYNC-08 learnings recorded in progress/spec files but not yet appended to individual agent histories. This is acceptable pattern — histories should reflect *completed* work; updates should wait until SYNC-09–SYNC-11 verification gates close.
+- **Identity/Now.md:** ✅ Current. Correctly reflects Milestone 4 execution advancing (SYNC-01–SYNC-08 complete, SYNC-09–SYNC-11 pending), local dev status, service responsiveness.
+- **Inherited technical noise:** ⚠️ Documented but not consolidated. Five explicit carryovers exist: (1) datetime.utcnow() deprecation, (2) dual lockfile build warning, (3) Auth0 production wiring deferred, (4) Playwright port fixture fallback, (5) worker import sys.path bootstrap. All are explicitly flagged as non-blocking in milestone decision records. Should consolidate into a `.squad/decisions/inbox/inherited-technical-noise.md` file for explicit Milestone 4 closure acknowledgment.
+- **Cleanup actions identified (6 total):**
+  - **P0:** Archive prior audit decision from inbox to .squad/log/ (already closed work)
+  - **P0:** Stage untracked 2026-03-09 session logs and orchestration files
+  - **P0:** Create log entry for this cleanup audit (2026-03-09T14-30-00Z)
+  - **P1:** Append SYNC-01–SYNC-08 learnings to agent histories (defer until SYNC-09–11 close)
+  - **P1:** Create inherited-technical-noise decision record for explicit M4 closure acknowledgment
+  - **P2:** Trim verbose sections from completed milestone progress files post-M5 (cosmetic)
+- **Conclusion:** ✅ No critical blocking issues. Squad discipline is sound. Process is working. Six actions are incremental housekeeping improving clarity without unblocking active work. Ready for next milestone work.
+- **Decision recorded at:** `.squad/decisions/inbox/kirk-cleanup-audit.md`.
+
+## Milestone 4 Publish Flow Review (2026-03-09)
+
+- **Intent classification:** The pending reviewer seed package (`apps/api/app/seeds`), its API regression coverage, the root reset script/docs, and the squad-state consolidation updates are intentional Milestone 4 integration work and should be committed together for the milestone publish boundary.
+- **Safe deletions:** The merged directive marker at `.squad/decisions/inbox/copilot-directive-20260308T030721Z-pr-per-milestone.md` and generated `apps/api/app/seeds/__pycache__/` artifacts are disposable local noise, not source-of-truth records.
+- **Validation gate:** Before merge, keep the repo gate aligned with existing checks only — prove the reviewer reset path works, run the new seed regressions, and then run the established repo lint/typecheck/build/test commands required by the current branch policy.
+- **Workflow learning:** Milestone-completion PR boundaries work best when the last uncommitted delta is classified explicitly into intentional product/infrastructure changes versus disposable workspace residue before any publish action starts; this avoids dragging inbox markers or generated caches into the merge commit.

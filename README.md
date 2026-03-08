@@ -24,6 +24,18 @@ This scaffold intentionally separates structure from dependency installation:
 3. Restore the Aspire AppHost project.
 4. Run the individual services or wire them together through the AppHost as Milestone 0 continues.
 
+### Reviewer smoke seed reset
+
+The API includes an intentional deterministic reviewer seed for local smoke/review flows. Reset the API database to that baseline from the repo root with:
+
+`npm run seed:api:reviewer-reset`
+
+You can pass through existing seed CLI options when needed, for example:
+
+`npm run seed:api:reviewer-reset -- --scenario sync-conflict-review`
+
+The underlying entrypoint is `python -m app.seeds reviewer-reset` from `apps\api`.
+
 ## Planning references
 
 - `.squad\project\constitution.md`

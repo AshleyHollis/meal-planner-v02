@@ -197,3 +197,27 @@
 - Downstream trip/reconciliation work should not infer the authoritative grocery snapshot from mutable list-row conventions; exposing the version identity explicitly keeps offline/trip seams honest before those milestones land.
 - Stable line references need to be decoupled from per-version row primary keys; otherwise any re-derive/carry-forward implementation detail leaks into downstream contracts.
 - In a multi-step derived workflow, correlation IDs are most useful when they flow through both success and warning diagnostics; incomplete-slot and stale-detection logs are much easier to support when they share the same thread as the triggering mutation.
+
+## Seed Classification Audit — 2026-03-09
+
+### What was verified
+- Reviewed the untracked reviewer seed module (`apps/api/app/seeds/__init__.py`, `__main__.py`, `reviewer.py`) plus its two untracked API test files and traced repo references across app code, tests, docs, and squad logs.
+- Confirmed the seed module is handwritten backend/test infrastructure rather than generated residue: it exposes a reusable API surface, a CLI entrypoint (`python -m app.seeds reviewer-reset`), deterministic smoke data, environment safety guards, and opt-in scenario overlays for Milestone 4 sync/trip review.
+- Confirmed the tests are also intentional infrastructure, but `apps/api/tests/test_reviewer_seed.py` is not integration-clean yet: `python -m pytest tests/test_seeds.py tests/test_reviewer_seed.py -q` currently fails one legacy row-id sync-upload assertion because the backend now resolves sync line aggregates by stable `grocery_line_id`, matching the locked grocery-line identity decision.
+
+### Learnings
+- The reviewer seed package is aligned with the approved smoke-testing posture: one small deterministic baseline household plus opt-in edge scenarios is now encoded in code, not just planning notes.
+- Clean integration still needs one explicit product-facing hook: the repo does not yet wire the seed CLI into startup/docs/scripts, so the next step is to document or script `python -m app.seeds reviewer-reset` for local reviewer bootstrap.
+- Seed verification must track the stable-line contract, not mutable grocery row IDs; otherwise the seed suite will drift against the downstream offline/sync seam it is supposed to protect.
+
+## Reviewer Seed Integration Cleanup — 2026-03-09
+
+### What changed
+- Replaced the stale reviewer sync-upload expectation with a single contract test that uses `grocery_line_id` as the line aggregate while still proving seeded payloads can carry the current row id as `grocery_list_item_id`.
+- Added a root `npm run seed:api:reviewer-reset` helper and README usage note so the intentional reviewer reseed flow is discoverable from normal repo-facing entrypoints.
+- Merged the reviewer seed classification inbox note into canonical decisions and cleared the inbox artifact.
+
+### Learnings
+- The reviewer reseed flow is worth exposing at the repo root because the seed package lives under `apps/api`, but the smoke workflow spans backend, web, and reviewer validation.
+- Stable `grocery_line_id` is the sync contract; `grocery_list_item_id` remains a current-row hint, not an interchangeable aggregate identifier.
+- Seed integration work is small but cross-team: when deterministic fixtures become part of a reviewer workflow, the contract, script, docs, and squad memory need to move together.

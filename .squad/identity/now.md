@@ -2,16 +2,18 @@
 
 - Milestone 2 (Weekly planner and explainable AI suggestions): **✅ COMPLETE AND APPROVED.** All 12 tasks done; Kirk signed off 2026-03-08.
 - Milestone 3 (Grocery derivation and review): **✅ COMPLETE AND APPROVED.** All 11 tasks done; Kirk signed off GROC-11 2026-03-09.
-- **Milestone 4 execution advancing:** Offline sync, trip mode, conflict review. SYNC-01 ✅ complete (Sulu locked contract seam 2026-03-09T02-00-00Z). SYNC-02 ✅ complete (Uhura offline store 2026-03-09), SYNC-03 ✅ complete (Uhura trip UX 2026-03-09), SYNC-04 ✅ complete (Scotty upload API 2026-03-09), SYNC-05 ✅ complete (Scotty classifier 2026-03-09). **SYNC-06 now active** (Scotty explicit resolution commands, ready_now). Local dev environment restored 2026-03-09T06-00-00Z.
-- **CURRENT SESSION (Ashley Hollis, 2026-03-09):** Full application Milestone 4 build continuing with Git hygiene hardening applied. Local dev environment stable and responsive.
-  - **Status:** SYNC-01 through SYNC-08 complete; **SYNC-09 and SYNC-10 (verification gates) now active**; SYNC-11 ready to follow.
+- Milestone 4 (Offline sync, trip mode, conflict review): **✅ COMPLETE AND APPROVED.** All 11 tasks done; Kirk signed off SYNC-11 2026-03-09. Local dev environment stable and responsive.
+- **CURRENT SESSION (Ashley Hollis, 2026-03-09T16-00-00Z):** Squad directory consolidation and cleanup pass complete. Audit findings merged into canonical decisions; publish-readiness notes recorded; Scribe history updated with Milestone 4 closure and consolidation learnings.
+  - **Status:** Milestone 4 approved and signed off; ready for integration PR (`feature/git-publish-readiness-clean` → main).
+  - **Next:** Create GitHub PR with feature branch; squash-and-merge after Kirk review. PR boundary follows milestone-completion rule (per Git Integration Process).
   - **Environment:** Local Aspire running (4 dotnet + 5 node + 10 Python processes); web, API, worker services all responsive; all build/test tools operational; database schema stable.
   - **Governance:** Git hygiene process hardening integrated (easy revert/merge workflows prioritized). Manual visual smoke testing mandatory at milestone end (built into SYNC-10); separation of testing and review confirmed; no staffing blockers.
   - **Git Practice:** Hard copies of feature branches preserved before merge; conflict-safe revert markers in place; CI automation enforced before integration.
+- **Squad Memory:** Decisions framework canonical and clean; publish-readiness notes active in inbox; agent histories current through Milestone 4 completion; quarterly audit discipline verified.
 - Locked constraints: Backend-only Auth0, AI-advisory-only, confirmed-plan-protection, SQL-backed trust data, roadmap-aware grocery-derivation dependencies, Milestone 3 scope cut-line (no trip/reconciliation work).
 
 
-## Milestone 4 Execution Status (Active — SYNC-06 Ready; SYNC-01–05 Complete)
+## Milestone 4 Execution Status (✅ COMPLETE AND APPROVED — 2026-03-09T01-00-00Z)
 
 | Task | Owner | Status | Completion |
 | --- | --- | --- | --- |
@@ -20,14 +22,14 @@
 | SYNC-03 | Uhura | ✅ done | 2026-03-09 |
 | SYNC-04 | Scotty | ✅ done | 2026-03-09 |
 | SYNC-05 | Scotty | ✅ done | 2026-03-09 |
-| SYNC-06 | Scotty | 🚀 ready_now | — |
-| SYNC-07 | Uhura | pending | — |
-| SYNC-08 | Scotty | pending | — |
-| SYNC-09 | McCoy | pending | — |
-| SYNC-10 | McCoy | pending | — |
-| SYNC-11 | Kirk | pending | — |
+| SYNC-06 | Scotty | ✅ done | 2026-03-09 |
+| SYNC-07 | Uhura | ✅ done | 2026-03-09 |
+| SYNC-08 | Scotty | ✅ done | 2026-03-09 |
+| SYNC-09 | McCoy | ✅ done | 2026-03-09 |
+| SYNC-10 | McCoy | ✅ done | 2026-03-09 |
+| SYNC-11 | Kirk | ✅ done | 2026-03-09T01-00-00Z |
 
-**Execution status:** 5/11 Milestone 4 tasks complete (SYNC-01–05); 1/11 ready to start (SYNC-06). **Local dev environment restored (2026-03-09T06-00-00Z):** build cache corruption resolved; typecheck, lint, build, all tests passing; web/API/worker services responsive. SYNC-07 and SYNC-08 ready to queue after SYNC-06 gate. All prerequisites satisfied for continuous integration and verification workflows.
+**Execution status:** 11/11 Milestone 4 tasks complete. **Kirk final acceptance recorded (2026-03-09T01-00-00Z).** Contract seam locked; durable offline store built; mobile trip mode implemented; backend sync/conflict handling complete; conflict-review UX delivered; sync observability and deterministic fixtures in place. Independent verification gates (SYNC-09/10/11) completed with smoke evidence captured in SYNC-10. Ready for Milestone 5 planning.
 
 ## ✅ RESOLVED: Milestone 3 Critical Path Complete and Verified (2026-03-08T22-00-00Z)
 
@@ -44,4 +46,3 @@
 
 - **Milestone 3 execution recorded by Scribe on Ashley Hollis authorization (2026-03-08T22-00-00Z).**
 - **GROC-08/GROC-09 completion recorded.** Full critical path approved. GROC-10 ready for McCoy E2E verification gate. GROC-11 ready for Kirk final acceptance review.
-

@@ -77,6 +77,25 @@
 - **Consumption Model**: Grocery, trip, cooking, planner, and AI features consume inventory through explicit inventory/reconciliation commands and read models, never direct overwrites of authoritative balances.
 - **Milestone 1 Priority**: Mutation receipts, correction chaining, and history read models are foundational because grocery, trip, and reconciliation features depend on them for trust and replay safety.
 
+## Squad Directory Governance (2026-03-09)
+
+- **Decisions Framework:** `.squad/decisions.md` is canonical and actively maintained for approved decisions binding current/upcoming milestones or standing governance rules. Files live at root of `.squad/decisions/`, not in subdirectories; do not create subdirectories for organizational structure without team discussion.
+- **Inbox Processing:** `.squad/decisions/inbox/` is a transient queue with target state empty or ≤2 items. Items are processed within 1-24 hours to merge into canonical `.squad/decisions.md` (governance rules), assign as active files in `.squad/decisions/` (approval-gate items), or archive to `.squad/log/` (evidence trail preserved).
+- **Historical Archive:** `.squad/log/` is append-only with chronological + descriptive naming (`YYYY-MM-DDTHH-MM-SSZ-description.md`). Files go here after milestone closure, superseded rules, or completion of feature work.
+- **Audit Result (2026-03-09T14-00-00Z):** Kirk's systematic cleanup audit found the directory substantially clean with no critical blocking issues. Five incremental housekeeping actions identified:
+  1. Move prior audit decision (`kirk-squad-directory-audit.md` from 2026-03-09T14-00-00Z) from inbox to `.squad/log/` as historical record.
+  2. Stage untracked 2026-03-09 session log files and orchestration logs.
+  3. Create closing log entry for the cleanup audit.
+  4. Append SYNC-01–SYNC-08 learnings to agent histories (Scotty, Uhura, Sulu) once SYNC-09–SYNC-11 verification gates complete.
+  5. Document inherited technical noise (datetime.utcnow() deprecation, dual lockfile, Auth0 production wiring, Playwright ports, worker import fallback) in a `.squad/decisions/inbox/inherited-technical-noise.md` file for explicit milestone-closure acknowledgment.
+- **Casting & Routing:** `.squad/team.md` reflects 9-person casting (Kirk, Spec, Uhura, Scotty, Spock, Sulu, McCoy, Scribe, Ralph). `.squad/routing.md` documents Git workflow enforcement (Kirk as process owner), working agreements (WCAG 2.1 AA, mobile-first, design/accessibility separation).
+- **Skills Directory:** Active reusable skills include idempotency, optimistic-concurrency-ui, audit-snapshot, spec-first workflow, and git-workflow. Keep index current as new skills emerge.
+
+## Git Integration Process (2026-03-09)
+
+- **PR Boundary by Milestone Completion:** Treat milestone completion as the default PR boundary; create a PR whenever a milestone is complete and approved. This aligns integration timing with feature milestones rather than arbitrary batching decisions.
+- **Rationale:** Milestone boundaries represent natural feature-complete points with approved acceptance gates (Kirk sign-off), verified test suites, and team consensus on quality. PRs at milestone boundaries simplify release notes, provide clear functional scope for review, and map directly to stakeholder approval decisions.
+
 ## MVP Delivery Roadmap (2026-03-07)
 - **MVP Order**: Foundation/delivery spine → household + inventory foundation → weekly planning + explainable AI → grocery calculation/review → mobile/offline trip mode → post-shopping/post-cooking reconciliation.
 - **Foundational Work**: Repo scaffolding, auth/session bootstrap, preview/CI wiring, and baseline quality/observability are MVP dependencies for safe downstream delivery.
@@ -1929,4 +1948,32 @@ All contributors to `meal-planner-v02` must follow these binding directives:
 
 **Binding on this project; extensible to other squad projects.**
 
+---
+
+## Decision: Scotty — Reviewer Seed Integration Contract (2026-03-09)
+
+**Date:** 2026-03-09  
+**Author:** Scotty (Backend)  
+**Status:** ✅ APPROVED  
+**Scope:** Reviewer smoke seed integration and discoverability
+
+### Decision
+
+Treat `apps/api/app/seeds` plus its test coverage as intentional committed reviewer infrastructure. The repo-facing reset path is `npm run seed:api:reviewer-reset` (wrapping `python -m app.seeds reviewer-reset` in `apps/api`), and sync-facing reviewer seed coverage must use stable `grocery_line_id` / `stable_line_id` semantics rather than mutable grocery row ids.
+
+### Why
+
+- The seed package is deliberate backend smoke infrastructure with environment safety guards, deterministic baseline data, and opt-in sync/trip review scenarios; leaving it undocumented at the repo root makes reviewer setup easy to miss.
+- The approved grocery sync seam already locked line identity to `grocery_line_id`, so keeping a row-id assertion in reviewer seed coverage would encode a false contract.
+- A single repo-level reset command keeps backend, web, and reviewer workflows aligned without inventing a second seed entrypoint.
+
+### Consequences
+
+- Root docs/scripts now expose the reviewer reseed flow consistently for local smoke usage.
+- Reviewer seed regression coverage now protects the stable-line sync contract while still allowing the payload to include the current `grocery_list_item_id` row hint.
+- The prior inbox note for seed classification is superseded by this canonical decision plus the integrated code/docs changes.
+
+### Evidence
+
+- `python -m pytest tests/test_seeds.py tests/test_reviewer_seed.py -q`
 
