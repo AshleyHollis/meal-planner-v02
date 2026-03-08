@@ -1,0 +1,67 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.copy {
+  flex: 1;
+  min-width: min(20rem, 100%);
+}
+
+.label {
+  display: block;
+  min-width: 0;
+}
+
+.detail {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.stale {
+  color: inherit;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.primaryAction {
+  padding: 0.35rem 0.85rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.primaryAction:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.idle { background: #f9fafb; color: #6b7280; }
+.generating { background: #eff6ff; color: #3b82f6; }
+.ready { background: #f0fdf4; color: #15803d; }
+.fallback { background: #fff7ed; color: #c2410c; }
+.warn { background: #fefce8; color: #854d0e; }
+.failed { background: #fef2f2; color: #b91c1c; }

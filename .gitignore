@@ -1,0 +1,46 @@
+# JavaScript / Node
+node_modules/
+.next/
+.next-dev/
+.next-prod/
+dist/
+coverage/
+
+# Python
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# .NET / Aspire
+bin/
+obj/
+.vs/
+TestResults/
+artifacts/
+*.user
+*.suo
+.aspire/
+
+# IDE
+.idea/
+.claude/settings.local.json
+
+# Misc
+*.db
+*.log
+*.local
+apps/api/build/
+*.egg-info/
+*.tsbuildinfo
+playwright-report/
+.playwright-artifacts/
+.playwright/
+test-results/
+

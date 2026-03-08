@@ -1,0 +1,319 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.tripRow {
+  padding: 1.1rem 0;
+}
+
+.inactive {
+  opacity: 0.78;
+}
+
+.label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.textColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.trace,
+.flagged,
+.override,
+.pending {
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.flagged {
+  color: #b45309;
+}
+
+.override {
+  color: #4338ca;
+}
+
+.pending {
+  color: #0f766e;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.quantityCluster {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.qty {
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.quantityLabel,
+.derivedQty {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.source {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.adHoc,
+.removed,
+.covered,
+.offset {
+  font-size: 0.72rem;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+}
+
+.adHoc {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.removed {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.covered {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.offset {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.actionButton,
+.quickButton,
+.saveButton,
+.removeButton,
+.completeButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  border-radius: 999px;
+  min-height: 46px;
+  padding: 0.6rem 0.95rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.quickButton {
+  min-width: 3.25rem;
+  font-weight: 700;
+}
+
+.saveButton {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #fff;
+}
+
+.removeButton {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.completeButton {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+.detailPanel {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.detailCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+
+.detailTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailCopy {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.detailList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.detailListItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.editor {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.editorField {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.editorLabel {
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.editorInput {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+}
+
+.editorActions,
+.removePanel {
+  margin-top: 0.75rem;
+}
+
+.removePanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .right {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .actions,
+  .editorActions {
+    width: 100%;
+  }
+
+  .actions > button,
+  .editorActions > button,
+  .removePanel > button {
+    flex: 1 1 calc(50% - 0.25rem);
+  }
+
+  .detailGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    gap: 0.85rem;
+  }
+
+  .name {
+    font-size: 1.02rem;
+  }
+
+  .qty {
+    font-size: 1.05rem;
+  }
+
+  .detailListItem,
+  .removePanel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions > button,
+  .editorActions > button,
+  .removePanel > button {
+    width: 100%;
+    flex-basis: 100%;
+  }
+}
